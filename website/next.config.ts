@@ -5,6 +5,25 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
+  async redirects() {
+    return [
+      {
+        source: "/download/windows/setup.exe",
+        destination: "https://github.com/sagarsahni6/printora-cloud-print/releases/download/v2.0.0/PrintoraServer-Setup.exe",
+        permanent: false,
+      },
+      {
+        source: "/download/windows/portable.zip",
+        destination: "https://github.com/sagarsahni6/printora-cloud-print/releases/download/v2.0.0/PrintoraServer-Windows-v2.0.0.zip",
+        permanent: false,
+      },
+      {
+        source: "/download/android/app.apk",
+        destination: "https://github.com/sagarsahni6/printora-cloud-print/releases/download/v2.0.0/Printora-Android-v2.0.0.apk",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

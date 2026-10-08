@@ -67,7 +67,7 @@ export default function DownloadWindowsPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Server v1.0.0</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Server v2.0.0</h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                 Stable Release
               </span>
@@ -77,15 +77,24 @@ export default function DownloadWindowsPage() {
             </p>
           </div>
 
-          <a
-            href={`${siteConfig.githubUrl}/releases`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download Installer (.exe)</span>
-          </a>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <a
+              href={siteConfig.directWindowsExeUrl}
+              download="PrintoraServer-Setup.exe"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Installer (.exe)</span>
+            </a>
+            <a
+              href={siteConfig.directWindowsZipUrl}
+              download="PrintoraServer-Windows-v2.0.0.zip"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium text-xs transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Portable (.zip)</span>
+            </a>
+          </div>
         </div>
 
         {/* System Requirements & Verification Details */}
@@ -121,7 +130,14 @@ export default function DownloadWindowsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Terminal className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                <span>Official GitHub release includes verified SHA-256 checksum</span>
+                <a
+                  href={siteConfig.checksumsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline text-blue-600 dark:text-blue-400 font-medium"
+                >
+                  Verified SHA-256 Checksums (SHA256SUMS.txt)
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <HardDrive className="w-3.5 h-3.5 text-blue-500 shrink-0" />
@@ -140,7 +156,7 @@ export default function DownloadWindowsPage() {
           <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider mb-3">Step-by-Step Installation Guide</h3>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-slate-600 dark:text-slate-400">
             <li>
-              <strong>Download the Installer:</strong> Click the download button above or visit our GitHub Releases page to retrieve `PrintoraServer-Setup-v1.0.0.exe`.
+              <strong>Download the Installer:</strong> Click the <em>&quot;Download Installer (.exe)&quot;</em> button above to directly retrieve <code>PrintoraServer-Setup.exe</code>.
             </li>
             <li>
               <strong>Windows SmartScreen Notice:</strong> If Microsoft Defender SmartScreen displays a warning for newly released binaries, click <em>&quot;More info&quot;</em> followed by <em>&quot;Run anyway&quot;</em>.

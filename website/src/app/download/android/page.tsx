@@ -67,20 +67,19 @@ export default function DownloadAndroidPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Android APK v1.0.0</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Android APK v2.0.0</h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                 Release Build
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Supports Android 8.0 through Android 15 • Universal ARM64 / ARMv7 APK
+              Supports Android 8.0 through Android 15 • Universal ARM64 / ARMv7 APK (2.5 MB)
             </p>
           </div>
 
           <a
-            href={`${siteConfig.githubUrl}/releases`}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={siteConfig.directAndroidApkUrl}
+            download="Printora-Android-v2.0.0.apk"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
           >
             <Download className="w-4 h-4" />
@@ -146,7 +145,7 @@ export default function DownloadAndroidPage() {
           </h3>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-slate-600 dark:text-slate-400">
             <li>
-              <strong>Download the APK:</strong> Tap the download button above on your Android phone to save `printora-app-v1.0.0.apk`.
+              <strong>Download the APK:</strong> Tap the <em>&quot;Download APK Package&quot;</em> button above on your Android phone to directly download <code>Printora-Android-v2.0.0.apk</code>.
             </li>
             <li>
               <strong>Allow Installation:</strong> If prompted by Android or Chrome with &quot;File might be harmful&quot;, select <em>&quot;Download anyway&quot;</em>. When opening the file, enable <em>&quot;Allow from this source&quot;</em> in your device settings.
