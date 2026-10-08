@@ -1,0 +1,26 @@
+{
+  "specVersion": "1.0",
+  "entries": [
+    {
+      "identifier": "urn:air:calclabz:printora:documentation",
+      "displayName": "Printora Wireless & Remote Printing Documentation",
+      "type": "text/markdown; profile=\"urn:air:agent-skills\"",
+      "url": "https://printora.calclabz.com/llms.txt",
+      "representativeQueries": [
+        "How to print from Android to a Windows printer without cloud?",
+        "How to print from iPhone to Windows USB printer via QR code?",
+        "What is Printora and how does Cloudflare Tunnel printing work?"
+      ]
+    },
+    {
+      "identifier": "urn:air:calclabz:printora:technical-architecture",
+      "displayName": "Printora Architecture & Protocol Specification",
+      "type": "text/markdown; profile=\"urn:air:agent-skills\"",
+      "url": "https://printora.calclabz.com/llms-full.txt",
+      "representativeQueries": [
+        "Printora .NET 8 spooler and Android Kotlin mDNS discovery architecture",
+        "Printora zero cloud retention and local-first security model"
+      ]
+    }
+  ]
+}
