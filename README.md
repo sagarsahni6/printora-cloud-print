@@ -5,16 +5,16 @@ Printora is a modern, enterprise-grade, **privacy-focused** wireless and cloud p
 ```
 📱 Android Device / 🌐 Web Browser
            │
-           │  (TLS / AES-256 Encrypted Transit — No Cloud Storage)
+           │  (TLS 1.2+ Encrypted Transit — No Cloud Storage)
            ▼
 ☁️ Cloudflare Tunnel Relay (Optional Remote Access)
    OR  ⚡ Local Wi-Fi Subnet (Direct Socket Fast-Path)
            │
            ▼
 🖥️ Printora Server (Windows Host PC)
-   ├── 🛡️ In-Memory Decryption & Spooling
+   ├── 🛡️ Temporary Spooling & Processing
    ├── 🖨️ Windows Print Dispatch
-   └── 🧹 Instant Automatic File Shredding / Cleanup
+   └── 🧹 Automatic Secure File Deletion / Cleanup
            │
            ▼
 🖨️ Physical Printer (Paper Output)
@@ -24,14 +24,14 @@ Printora is a modern, enterprise-grade, **privacy-focused** wireless and cloud p
 
 ## 🛡️ Privacy & Security Commitments
 
-Printora is engineered from the ground up for strict privacy, data sovereignty, and zero-trace operation:
+Printora is engineered for privacy, local data sovereignty, and secure host operation:
 
 | Privacy Pillar | How Printora Protects You |
 |----------------|---------------------------|
-| **Zero Cloud Storage** | The cloud is strictly an ephemeral encrypted transit pipe. **Zero files, images, or documents are ever stored or cached in the cloud.** |
-| **Instant Auto-Cleanup** | Uploaded documents and converted temporary files are **automatically deleted immediately upon print completion or cancellation**. |
-| **Complete Data Sovereignty** | Print job metadata, SQLite databases, and server configurations reside 100% locally on your own Host PC (`%LOCALAPPDATA%\Printora`). |
-| **End-to-End Protection** | Connections use TLS encryption, AES-256 payload transfers, and certificate fingerprint pinning to prevent man-in-the-middle attacks. |
+| **Zero Cloud Storage** | The cloud is strictly an ephemeral encrypted transit pipe when remote relay is enabled. **Zero files, images, or documents are ever stored or cached in the cloud.** |
+| **Instant Auto-Cleanup** | Uploaded documents and converted temporary files are **spooled to temporary disk storage and securely deleted upon job completion or cancellation** (with single-pass zero overwrite when enabled). |
+| **Complete Data Sovereignty** | Print job metadata, SQLite databases, and server configurations reside locally on your own Host PC (`%LOCALAPPDATA%\Printora`). Secrets are protected at rest via Windows DPAPI. |
+| **Transit Protection** | Connections use TLS 1.2+ encryption with self-signed certificate fingerprint pinning (local LAN) or Cloudflare Tunnel (remote) to prevent man-in-the-middle attacks. |
 | **Zero Account / No Tracking** | No account creation, no external telemetry, and no tracking cookies. You maintain full ownership of your printing hardware and data. |
 | **Host File Safeguard** | The auto-cleanup engine strictly manages temporary spool uploads; personal desktop files printed via drag-and-drop are always kept safe. |
 
@@ -39,9 +39,9 @@ Printora is engineered from the ground up for strict privacy, data sovereignty, 
 
 ## 🌟 Key Highlights
 
-- ☁️ **Privacy-Preserving Cloud Relay**: Print securely from outside your home or office network via Cloudflare Zero-Trust Tunnels without port-forwarding or external data storage.
-- ⚡ **LAN Fast-Path Connect**: Instant auto-discovery via mDNS and UDP beacons with zero-latency direct socket printing on local networks.
-- 🧹 **Zero-Trace Auto-Cleanup**: Automatically purges spool documents and converted files the moment your document leaves the print queue.
+- ☁️ **Privacy-Preserving Cloud Relay**: Optional remote printing from outside your home or office network via Cloudflare Zero-Trust Tunnels without port-forwarding or external data storage.
+- ⚡ **LAN Fast-Path Connect**: Instant auto-discovery via mDNS and UDP beacons with direct socket printing on local networks.
+- 🧹 **Secure Auto-Cleanup**: Automatically purges temporary spool documents and converted files the moment your document leaves the print queue.
 - 📱 **Native Android Client**: Built with Jetpack Compose, Material 3, dynamic theming, document scanner, camera QR pairing, batch printing, and live queue tracking.
 - 🌐 **Web Print Studio**: Print directly from any phone or browser by scanning a dynamic QR code — no app installation required. Includes rate limiting, file type validation, and PIN protection.
 - 🔒 **Desktop Admin Control**: New connecting devices require explicit approval or a 6-digit dynamic PIN generated directly on the Host PC dashboard.
@@ -200,7 +200,7 @@ WIFI PRINT/
 ```powershell
 dotnet test WifiPrintServer/WifiPrintServer.sln
 ```
-*Current test suite: 23 unit tests passing (covering queue management, privacy auto-cleanup, authentication, encryption, and Web Print protection).*
+*Current test suite: 42 unit tests passing (covering queue management, secure cleanup, authentication, rate limiting, and Web Print protection).*
 
 ### Run Android Tests & Build
 ```powershell
@@ -212,4 +212,4 @@ cd WifiPrintApp
 ---
 
 ## 📄 License
-Printora is distributed under the proprietary license of the Printora Team. All rights reserved.
+Printora is source-available under a proprietary license. All rights reserved. See [LICENSE](LICENSE) for terms.

@@ -4,7 +4,7 @@ import { Printer, ShieldCheck, Zap, Laptop, CheckCircle } from "lucide-react";
 
 const TICKER_ITEMS = [
   "No account needed",
-  "AES-256 + TLS",
+  "TLS 1.2+ transit",
   "Certificate pinning",
   "No tracking or telemetry",
   "Zero cloud storage",
@@ -100,8 +100,8 @@ export function EcosystemMarquee() {
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">100% Local-First</div>
-                <div className="text-[11px] text-slate-500">Documents never leave your network</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Local-First Architecture</div>
+                <div className="text-[11px] text-slate-500">Local Wi-Fi with optional remote tunnel</div>
               </div>
             </div>
 
@@ -110,8 +110,8 @@ export function EcosystemMarquee() {
                 <Zap className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">&lt; 1.2s Fast Path</div>
-                <div className="text-[11px] text-slate-500">Zero-latency peer-to-peer Wi-Fi</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Fast Local Dispatch</div>
+                <div className="text-[11px] text-slate-500">Direct socket printing on Wi-Fi</div>
               </div>
             </div>
 

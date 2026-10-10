@@ -36,4 +36,4 @@ Printora transforms standard Windows printers into wireless mobile printing endp
 - **Web Client**: Modern mobile browser (Safari iOS 14+, Chrome Android, Edge)
 - **Supported Formats**: PDF, JPG, PNG, BMP, GIF, TXT, DOC, DOCX
 - **Privacy Model**: Local-first direct network execution; automatic temporary file deletion; zero third-party cloud retention.
-- **Open Source Repository**: https://github.com/sagarsahni6/printora-cloud-print
+- **Source Code Repository**: https://github.com/sagarsahni6/printora-cloud-print

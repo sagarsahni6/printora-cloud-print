@@ -5,7 +5,7 @@ import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
   title: "Compare Mobile & Windows Printing Solutions – Printora Alternatives",
-  description: "See how Printora compares to PrinterShare, Google Cloud Print, and NokoPrint. 100% free, zero ads, zero accounts, and in-memory privacy for your Windows PC printers.",
+  description: "See how Printora compares to PrinterShare, Google Cloud Print, and NokoPrint. 100% free, zero ads, zero accounts, and local data privacy for your Windows PC printers.",
   path: "/compare",
   keywords: [
     "mobile printing comparison",
@@ -34,7 +34,7 @@ export default function CompareHubPage() {
         "100% Free forever with no page limits",
         "Zero ads and zero tracking telemetry",
         "QR Web Print Studio works on iPhone without app installation",
-        "Includes 2-in-1 ID card scanning and offline OCR",
+        "Includes 2-in-1 ID card scanning and on-device OCR",
       ],
     },
     {

@@ -43,7 +43,7 @@ export function Footer() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-800 text-xs shadow-xs"
               >
                 <GithubIcon className="w-3.5 h-3.5" />
-                <span>Open Source Repository</span>
+                <span>GitHub Repository</span>
                 <ExternalLink className="w-3 h-3 text-slate-400" />
               </a>
             </div>

@@ -52,7 +52,7 @@ export default function GoogleCloudPrintAlternativePage() {
     },
     {
       q: "Is Printora really free compared to PaperCut or Mobility Print?",
-      a: "Yes, Printora is 100% free and open source. Enterprise alternatives like PaperCut Mobility Print are built for corporate networks with LDAP and licensing costs. Printora is built specifically for individuals, home offices, and small business workshops."
+      a: "Yes, Printora is 100% free and source-available. Enterprise alternatives like PaperCut Mobility Print are built for corporate networks with LDAP and licensing costs. Printora is built specifically for individuals, home offices, and small business workshops."
     },
   ];
 
@@ -152,7 +152,7 @@ export default function GoogleCloudPrintAlternativePage() {
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white">Safe Remote Printing Anywhere</h3>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Need to print from cellular data or while traveling? Turn on Printora&apos;s Cloudflare Tunnel integration for end-to-end TLS print routing with zero router port forwarding.
+            Need to print from cellular data or while traveling? Turn on Printora&apos;s Cloudflare Tunnel integration for secure TLS print routing with zero router port forwarding.
           </p>
         </div>
 
@@ -160,9 +160,9 @@ export default function GoogleCloudPrintAlternativePage() {
           <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-[#0a7746] dark:text-emerald-400 flex items-center justify-center mb-4">
             <Shield className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Zero Account &amp; Airgap Privacy</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Zero Account &amp; Local Privacy</h3>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            No Google account, no passwords to sync, and no document indexing. Everything stays on your local hardware with RAM-only processing and automatic purge.
+            No Google account, no passwords to sync, and no document indexing. Everything stays on your own hardware with automatic purge upon print completion.
           </p>
         </div>
       </div>

@@ -213,16 +213,16 @@ export function ModernBentoGrid() {
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
                   <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
                   <div className="text-xs">
-                    <span className="font-bold text-slate-900 dark:text-white">In-Memory Spooling:</span>{" "}
-                    <span className="text-slate-500">Payload streamed straight into RAM buffers.</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Spool & Print Dispatch:</span>{" "}
+                    <span className="text-slate-500">Documents spooled to temporary files on host PC.</span>
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
                   <Trash2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <div className="text-xs">
-                    <span className="font-bold text-slate-900 dark:text-white">Auto-Shred Temp Files:</span>{" "}
-                    <span className="text-slate-500">Zero persistent copies left on host disk.</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Automatic Cleanup:</span>{" "}
+                    <span className="text-slate-500">Temporary spool files deleted immediately on job completion.</span>
                   </div>
                 </div>
 
@@ -237,7 +237,7 @@ export function ModernBentoGrid() {
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
-              ✓ Compliant with strict enterprise airgap privacy
+              ✓ Local data sovereignty with zero external cloud accounts
             </div>
           </div>
 
@@ -258,7 +258,7 @@ export function ModernBentoGrid() {
               <div className="mt-6 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 relative">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800/80 mb-2">
                   <span className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase">
-                    Extracted Text (Tesseract Engine)
+                    Extracted Text (Google ML Kit Engine)
                   </span>
                   <button
                     type="button"
@@ -276,7 +276,7 @@ export function ModernBentoGrid() {
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-mono text-slate-500">
-              Confidence Score: 99.4% • 100% Offline Processing
+              On-Device Neural Text Recognition
             </div>
           </div>
 
@@ -293,7 +293,7 @@ export function ModernBentoGrid() {
                       Hardware Compatibility Explorer
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Search 4,000+ printers supported through the native Windows Spooler
+                      Printers supported through the native Windows Spooler
                     </p>
                   </div>
                 </div>

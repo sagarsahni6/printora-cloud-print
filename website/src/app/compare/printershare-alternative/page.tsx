@@ -5,7 +5,7 @@ import { BreadcrumbJsonLd, FaqJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
   title: "Best Free PrinterShare Alternative (No Ads, No Account) – Printora",
-  description: "Looking for a free alternative to PrinterShare? Printora offers zero subscriptions, zero ads, and instant wireless mobile printing to any Windows-connected printer with full in-memory privacy.",
+  description: "Looking for a free alternative to PrinterShare? Printora offers zero subscriptions, zero ads, and instant wireless mobile printing to any Windows-connected printer with full local privacy.",
   path: "/compare/printershare-alternative",
   keywords: [
     "printershare alternative",
@@ -28,13 +28,13 @@ export default function PrinterShareAlternativePage() {
     { feature: "Price & Licensing", printora: "100% Free Forever", printerShare: "$12.95 Premium / Subscriptions" },
     { feature: "Advertising", printora: "Zero Ads", printerShare: "Ads in free tier" },
     { feature: "Account Required", printora: "No Account Needed", printerShare: "Registration recommended" },
-    { feature: "Cloud Data Storage", printora: "0 Bytes Retained (RAM only)", printerShare: "Third-party cloud storage options" },
+    { feature: "Cloud Data Storage", printora: "0 Cloud Bytes Retained", printerShare: "Third-party cloud storage options" },
     { feature: "iPhone Support Without App", printora: "Yes (QR Web Print in Safari)", printerShare: "No (Must install iOS app)" },
     { feature: "Windows USB Printer Sharing", printora: "Native 1-Click Spooler Bridge", printerShare: "Requires separate desktop agent" },
     { feature: "Built-in 2-in-1 ID Card Scanner", printora: "Included (Auto A4 format)", printerShare: "Not available" },
-    { feature: "On-Device OCR Text Extraction", printora: "Included (Offline Tesseract)", printerShare: "Not available" },
+    { feature: "On-Device OCR Text Extraction", printora: "Included (Google ML Kit)", printerShare: "Not available" },
     { feature: "Architecture", printora: "Modern .NET 8 + Kotlin + Compose", printerShare: "Legacy legacy codebase" },
-    { feature: "Open Source Code Available", printora: "Yes (GitHub)", printerShare: "Closed Source Proprietary" },
+    { feature: "Source Code Available", printora: "Yes (GitHub)", printerShare: "Closed Source Proprietary" },
   ];
 
   const faqs = [
@@ -68,7 +68,7 @@ export default function PrinterShareAlternativePage() {
           <span className="text-[#0a7746] dark:text-emerald-400">PrinterShare Alternative</span>
         </h1>
         <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-          Tired of subscriptions, page limits, and outdated interfaces? Printora bridges your phone to any Windows printer with zero cloud accounts, zero ads, and complete in-memory airgap privacy.
+          Tired of subscriptions, page limits, and outdated interfaces? Printora bridges your phone to any Windows printer with zero cloud accounts, zero ads, and local data privacy.
         </p>
 
         {/* CTA Buttons */}
@@ -146,9 +146,9 @@ export default function PrinterShareAlternativePage() {
           <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-[#0a7746] dark:text-emerald-400 flex items-center justify-center mb-4">
             <Shield className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Ephemeral In-Memory Spooling</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Secure Host Auto-Cleanup</h3>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Your documents are streamed straight into RAM buffers and purged immediately once printing concludes. 0 bytes are stored on third-party cloud servers.
+            Documents are spooled to temporary files on your PC and securely deleted immediately upon job completion or cancellation. 0 bytes are retained on cloud servers.
           </p>
         </div>
 
@@ -158,7 +158,7 @@ export default function PrinterShareAlternativePage() {
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white">Built-in Mobile Scanner &amp; OCR</h3>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Scan documents with auto edge detection, capture front &amp; back of ID cards onto a single A4, and extract text offline with Tesseract OCR without extra utility apps.
+            Scan documents with auto edge detection, capture front &amp; back of ID cards onto a single A4, and extract text on-device with Google ML Kit without extra utility apps.
           </p>
         </div>
       </div>

@@ -60,11 +60,11 @@ export function HowItWorksSection() {
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                In-Memory Decryption
+                TLS 1.2+ Decryption
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Auto-Purge &amp; Shred
+                Automatic Secure Cleanup
               </span>
             </div>
           </div>

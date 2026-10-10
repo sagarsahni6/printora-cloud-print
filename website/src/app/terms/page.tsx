@@ -6,11 +6,11 @@ import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
   title: "Terms of Service",
-  description: "Terms and conditions for utilizing the Printora open-source print server and mobile printing software.",
+  description: "Terms and conditions for utilizing the Printora source-available print server and mobile printing software.",
   path: "/terms",
   keywords: [
     "printora terms of service",
-    "open source license terms",
+    "software license terms",
     "printora software disclaimer",
   ],
 });
@@ -37,7 +37,7 @@ export default function TermsPage() {
       <div className="border-b border-slate-200 dark:border-slate-800 pb-8 mb-10">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold mb-4">
           <Scale className="w-3.5 h-3.5" />
-          <span>Legal &amp; Open Source Terms</span>
+          <span>Legal &amp; Software Terms</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Terms of Service
@@ -51,7 +51,7 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">1. Software License &amp; Permitted Use</h2>
           <p>
-            Printora is free, open-source software distributed under standard permissive licensing terms. You are free to run the software on your personal or corporate computers, distribute it across private local networks, and modify the source code in compliance with the repository license.
+            Printora is source-available software provided under the terms set forth in the project repository LICENSE. You may inspect and run the software for authorized personal or internal evaluation in compliance with the repository license. Redistribution, modification, and commercial deployment are governed by the repository license terms.
           </p>
         </section>
 
@@ -84,7 +84,7 @@ export default function TermsPage() {
         </section>
 
         <div className="pt-8 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500">
-          For legal inquiries, open source licensing clarifications, or commercial enterprise questions, please visit our{" "}
+          For legal inquiries, licensing clarifications, or commercial enterprise questions, please visit our{" "}
           <a
             href={`${siteConfig.githubUrl}`}
             target="_blank"

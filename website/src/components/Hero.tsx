@@ -68,7 +68,7 @@ export function Hero() {
                   LIVE JOB • <span className="lowercase text-slate-600 dark:text-slate-400">invoice_0412.pdf</span>
                 </span>
                 <span className="text-[#0a7746] dark:text-emerald-400 font-bold tracking-wider">
-                  TLS + AES-256
+                  TLS 1.2+ PINNED
                 </span>
               </div>
 
@@ -139,7 +139,7 @@ export function Hero() {
               {/* Bottom Badge inside card */}
               <div className="flex justify-center pt-2">
                 <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#0e171b] text-emerald-400 font-mono text-[11px] font-semibold border border-slate-800 shadow-sm">
-                  <span>FILE SHREDDED • 0 BYTES STORED</span>
+                  <span>TEMPORARY FILE DELETED • 0 CLOUD BYTES</span>
                 </div>
               </div>
 

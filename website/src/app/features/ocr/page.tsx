@@ -26,7 +26,7 @@ const OCR_FAQS = [
   },
   {
     q: "How accurate is the OCR engine on crumpled receipts or low-contrast paper?",
-    a: "When paired with Printora's automated perspective correction and Magic B&W binarization filter, OCR achieves over 99% character accuracy on printed Latin text down to 6pt font. For thermal receipts with faint print, toggling the contrast enhancer dramatically improves recognition.",
+    a: "When paired with Printora's automated perspective correction and contrast binarization filter, OCR achieves high character accuracy on printed Latin text. For thermal receipts with faint print, toggling the contrast enhancer improves recognition.",
   },
   {
     q: "Can I copy individual lines or must I export the entire scanned page?",
@@ -34,7 +34,7 @@ const OCR_FAQS = [
   },
   {
     q: "Are scanned financial records, passwords, or personal documents confidential?",
-    a: "Completely. Because the OCR neural network processes pixel tensors strictly in volatile device RAM without transmitting data to remote servers, your sensitive corporate contracts, bank statements, and tax forms never leave your hardware.",
+    a: "Completely. Because the OCR neural network processes pixel data on-device using Google ML Kit without transmitting document images to remote servers, your sensitive corporate contracts, bank statements, and tax forms stay on your device.",
   },
 ];
 

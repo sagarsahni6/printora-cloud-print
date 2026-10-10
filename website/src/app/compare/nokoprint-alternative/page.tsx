@@ -32,9 +32,9 @@ export default function NokoPrintAlternativePage() {
     { feature: "Remote 4G/5G Internet Print", printora: "Cloudflare Tunnel (Built-in)", nokoprint: "Local Wi-Fi only (no remote bridge)" },
     { feature: "Built-in Camera Scanner", printora: "Auto Edge & Multi-page PDF", nokoprint: "Basic scanning integration" },
     { feature: "2-in-1 ID Card Mode", printora: "Front + Back combined to A4", nokoprint: "Not supported" },
-    { feature: "Offline OCR Text Extraction", printora: "Included (Offline Tesseract)", nokoprint: "Not included" },
+    { feature: "On-Device OCR Text Extraction", printora: "Included (Google ML Kit)", nokoprint: "Not included" },
     { feature: "Print Queue & Spooler Status", printora: "Real-time queue monitoring", nokoprint: "Blind spool send" },
-    { feature: "Open Source Code Available", printora: "Yes (GitHub repository)", nokoprint: "Closed source proprietary" },
+    { feature: "Source Code Available", printora: "Yes (GitHub repository)", nokoprint: "Closed source proprietary" },
   ];
 
   const faqs = [
@@ -52,7 +52,7 @@ export default function NokoPrintAlternativePage() {
     },
     {
       q: "Is Printora really ad-free and free forever?",
-      a: "Yes. Printora is completely free, ad-free, and open source under the MIT license on GitHub. There are no paywalls, no watermark additions to your documents, and no subscription popups."
+      a: "Yes. Printora is completely free, ad-free, and source-available on GitHub. There are no paywalls, no watermark additions to your documents, and no subscription popups."
     },
   ];
 
@@ -160,7 +160,7 @@ export default function NokoPrintAlternativePage() {
           <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-[#0a7746] dark:text-emerald-400 flex items-center justify-center mb-4">
             <Shield className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Secure Local In-Memory Bridge</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Secure Local TLS Bridge</h3>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Never type your Windows user password into a mobile app. Printora connects directly over an authenticated TLS socket without touching Windows credentials.
           </p>

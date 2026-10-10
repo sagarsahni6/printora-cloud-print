@@ -132,7 +132,7 @@
       <animate attributeName="stroke-width" calcMode="discrete" values="2;3.5;2;2" keyTimes="0;0.20;0.27;1" dur="8s" repeatCount="indefinite"/>
     </path>
     <text x="-2" y="-6" text-anchor="middle" fill="#0E171B" font-size="18" font-weight="700">Internet</text>
-    <text x="-2" y="12" text-anchor="middle" fill="#0A7746" font-size="10" font-weight="700">TLS AES-256</text>
+    <text x="-2" y="12" text-anchor="middle" fill="#0A7746" font-size="10" font-weight="700">TLS 1.2+ PINNED</text>
   </g>
 
   <!-- Windows PC (Light Mode) -->
