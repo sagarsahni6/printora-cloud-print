@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using WifiPrintServer.Models;
 
 namespace WifiPrintServer.Services;
@@ -68,7 +69,7 @@ public class FileProcessingService
     }
 
     /// <summary>
-    /// Inspects file header magic bytes to prevent file extension spoofing and disguised executables.
+    /// Inspects file header magic bytes and structure to prevent file extension spoofing and disguised executables.
     /// </summary>
     public static bool ValidateFileContent(string filePath, string ext)
     {
@@ -82,20 +83,50 @@ public class FileProcessingService
             }
 
             ext = ext.ToLowerInvariant();
-            return ext switch
+            switch (ext)
             {
-                ".pdf" => header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46, // %PDF
-                ".jpg" or ".jpeg" => header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
-                ".png" => header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47, // .PNG
-                ".bmp" => header[0] == 0x42 && header[1] == 0x4D, // BM
-                ".gif" => header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46, // GIF
-                ".docx" => header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04, // PK..
-                ".doc" => (header[0] == 0xD0 && header[1] == 0xCF && header[2] == 0x11 && header[3] == 0xE0) ||
-                          (header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04),
-                ".txt" or ".text" => !(header[0] == 0x4D && header[1] == 0x5A) && // Not Windows PE (MZ)
-                                     !(header[0] == 0x7F && header[1] == 0x45 && header[2] == 0x4C && header[3] == 0x46), // Not Linux ELF
-                _ => false
-            };
+                case ".pdf":
+                    return header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46; // %PDF
+                case ".jpg" or ".jpeg":
+                    return header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF;
+                case ".png":
+                    return header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47; // .PNG
+                case ".bmp":
+                    return header[0] == 0x42 && header[1] == 0x4D; // BM
+                case ".gif":
+                    return header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46; // GIF
+                case ".docx":
+                    if (header[0] != 0x50 || header[1] != 0x4B || header[2] != 0x03 || header[3] != 0x04)
+                        return false;
+                    try
+                    {
+                        using var archive = ZipFile.OpenRead(filePath);
+                        return archive.Entries.Any(e => string.Equals(e.FullName, "[Content_Types].xml", StringComparison.OrdinalIgnoreCase));
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                case ".doc":
+                    return (header[0] == 0xD0 && header[1] == 0xCF && header[2] == 0x11 && header[3] == 0xE0) ||
+                           (header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04);
+                case ".txt" or ".text":
+                    if (header[0] == 0x4D && header[1] == 0x5A) return false; // Windows PE (MZ)
+                    if (header[0] == 0x7F && header[1] == 0x45 && header[2] == 0x4C && header[3] == 0x46) return false; // Linux ELF
+                    // Reject text files containing NUL bytes in the first 8KB
+                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        var buf = new byte[Math.Min(fs.Length, 8192)];
+                        int read = fs.Read(buf, 0, buf.Length);
+                        for (int i = 0; i < read; i++)
+                        {
+                            if (buf[i] == 0) return false;
+                        }
+                    }
+                    return true;
+                default:
+                    return false;
+            }
         }
         catch
         {
@@ -112,7 +143,6 @@ public class FileProcessingService
         if (ext == ".docx" || ext == ".doc")
             return await ConvertDocxToPdfAsync(filePath);
 
-
         return (null, $"No converter for {ext}");
     }
 
@@ -123,23 +153,28 @@ public class FileProcessingService
             string outputDir = Path.GetDirectoryName(filePath) ?? _settings.UploadDirectory;
             string[] paths = {
                 @"C:\Program Files\LibreOffice\program\soffice.exe",
-                @"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-                "soffice"
+                @"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
             };
-            string? soffice = paths.FirstOrDefault(p => p == "soffice" || File.Exists(p));
+            string? soffice = paths.FirstOrDefault(File.Exists);
             if (soffice == null)
                 return (null, "LibreOffice required for DOCX conversion but not found.");
 
+            string userProfile = Path.Combine(Path.GetTempPath(), "PrintoraLO").Replace('\\', '/');
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = soffice,
-                Arguments = $"--headless --convert-to pdf --outdir \"{outputDir}\" \"{filePath}\"",
-                CreateNoWindow = true, UseShellExecute = false,
+                Arguments = $"--headless --norestore \"-env:UserInstallation=file:///{userProfile}\" --convert-to pdf --outdir \"{outputDir}\" \"{filePath}\"",
+                CreateNoWindow = true,
+                UseShellExecute = false,
                 RedirectStandardError = true
             };
             using var proc = System.Diagnostics.Process.Start(psi);
             if (proc == null) return (null, "Failed to start LibreOffice");
-            await proc.WaitForExitAsync();
+            if (!proc.WaitForExit(60_000))
+            {
+                try { proc.Kill(true); } catch { }
+                return (null, "LibreOffice conversion timed out (60s)");
+            }
 
             string pdfPath = Path.ChangeExtension(filePath, ".pdf");
             return File.Exists(pdfPath) ? (pdfPath, null) : (null, "Conversion produced no output");
@@ -173,13 +208,28 @@ public class FileProcessingService
 
     public void CleanupOldFiles()
     {
+        CleanupOrphanedFiles(TimeSpan.FromHours(24));
+    }
+
+    /// <summary>
+    /// Sweeps orphaned uploaded files older than the specified age.
+    /// </summary>
+    public void CleanupOrphanedFiles(TimeSpan maxAge)
+    {
         try
         {
             if (!Directory.Exists(_settings.UploadDirectory)) return;
-            var cutoff = DateTime.UtcNow.AddHours(-24);
+            var cutoff = DateTime.UtcNow - maxAge;
             foreach (var file in Directory.GetFiles(_settings.UploadDirectory))
-                if (File.GetCreationTimeUtc(file) < cutoff) File.Delete(file);
+            {
+                try
+                {
+                    if (File.GetCreationTimeUtc(file) < cutoff && File.GetLastWriteTimeUtc(file) < cutoff)
+                        File.Delete(file);
+                }
+                catch { }
+            }
         }
-        catch (Exception ex) { _logger.LogWarning(ex, "Cleanup error"); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Orphaned file cleanup error"); }
     }
 }

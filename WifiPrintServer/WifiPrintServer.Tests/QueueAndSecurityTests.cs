@@ -252,7 +252,8 @@ public sealed class QueueAndSecurityTests : IDisposable
             CurrentQrPairingToken = "TEST_QR_TOKEN_123"
         };
         var authService = new AuthService(settings, NullLogger<AuthService>.Instance, store);
-        var controller = new AuthController(authService, settings, NullLogger<AuthController>.Instance);
+        var limiter = new AttemptLimiter(5, TimeSpan.FromMinutes(5));
+        var controller = new AuthController(authService, settings, limiter, NullLogger<AuthController>.Instance);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Connection.RemoteIpAddress = IPAddress.Loopback;
@@ -284,7 +285,8 @@ public sealed class QueueAndSecurityTests : IDisposable
             CurrentQrPairingToken = "SECRET_QR_TOKEN"
         };
         var authService = new AuthService(settings, NullLogger<AuthService>.Instance, store);
-        var controller = new AuthController(authService, settings, NullLogger<AuthController>.Instance);
+        var limiter = new AttemptLimiter(5, TimeSpan.FromMinutes(5));
+        var controller = new AuthController(authService, settings, limiter, NullLogger<AuthController>.Instance);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("198.51.100.42");
@@ -325,7 +327,8 @@ public sealed class QueueAndSecurityTests : IDisposable
             CurrentConnectionPin = "842915"
         };
         var authService = new AuthService(settings, NullLogger<AuthService>.Instance, store);
-        var controller = new AuthController(authService, settings, NullLogger<AuthController>.Instance);
+        var limiter3 = new AttemptLimiter(5, TimeSpan.FromMinutes(5));
+        var controller = new AuthController(authService, settings, limiter3, NullLogger<AuthController>.Instance);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("198.51.100.42");
@@ -357,7 +360,8 @@ public sealed class QueueAndSecurityTests : IDisposable
             CurrentQrPairingToken = "PERMANENT_QR_TOKEN"
         };
         var authService = new AuthService(settings, NullLogger<AuthService>.Instance, store);
-        var controller = new AuthController(authService, settings, NullLogger<AuthController>.Instance);
+        var limiter4 = new AttemptLimiter(5, TimeSpan.FromMinutes(5));
+        var controller = new AuthController(authService, settings, limiter4, NullLogger<AuthController>.Instance);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("198.51.100.42");
@@ -646,6 +650,216 @@ public sealed class QueueAndSecurityTests : IDisposable
         // 4. Normal plain text
         File.WriteAllText(tempFile, "Hello World from clean text file");
         Assert.True(FileProcessingService.ValidateFileContent(tempFile, ".txt"));
+    }
+
+    [Fact]
+    public void AttemptLimiter_LocksOut_After_MaxFailures()
+    {
+        var limiter = new AttemptLimiter(maxPerKey: 3, window: TimeSpan.FromMinutes(1));
+        string ip = "192.168.1.50";
+
+        Assert.False(limiter.IsLocked(ip, out _));
+
+        limiter.RecordFailure(ip);
+        limiter.RecordFailure(ip);
+        Assert.False(limiter.IsLocked(ip, out _));
+
+        limiter.RecordFailure(ip);
+        Assert.True(limiter.IsLocked(ip, out var retryAfter));
+        Assert.True(retryAfter > TimeSpan.Zero);
+    }
+
+    [Fact]
+    public void AttemptLimiter_Resets_On_Success()
+    {
+        var limiter = new AttemptLimiter(maxPerKey: 2, window: TimeSpan.FromMinutes(1));
+        string ip = "192.168.1.51";
+
+        limiter.RecordFailure(ip);
+        limiter.RecordFailure(ip);
+        Assert.True(limiter.IsLocked(ip, out _));
+
+        limiter.Reset(ip);
+        Assert.False(limiter.IsLocked(ip, out _));
+    }
+
+    [Fact]
+    public void AttemptLimiter_Enforces_GlobalMax()
+    {
+        var limiter = new AttemptLimiter(maxPerKey: 10, window: TimeSpan.FromMinutes(1), globalMax: 3);
+
+        limiter.RecordFailure("ip1");
+        limiter.RecordFailure("ip2");
+        limiter.RecordFailure("ip3");
+
+        Assert.True(limiter.IsLocked("ip4", out var retryAfter));
+        Assert.True(retryAfter > TimeSpan.Zero);
+    }
+
+    [Fact]
+    public void ClientIpResolver_Honors_Proxy_When_Loopback()
+    {
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = IPAddress.Loopback;
+        context.Request.Headers["CF-Connecting-IP"] = "203.0.113.195";
+
+        var ip = ClientIpResolver.GetClientIp(context);
+        Assert.Equal("203.0.113.195", ip);
+        Assert.True(ClientIpResolver.IsViaTunnel(context));
+    }
+
+    [Fact]
+    public void ClientIpResolver_Ignores_Proxy_When_Not_Loopback()
+    {
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = IPAddress.Parse("192.168.1.88");
+        context.Request.Headers["CF-Connecting-IP"] = "203.0.113.195";
+
+        var ip = ClientIpResolver.GetClientIp(context);
+        Assert.Equal("192.168.1.88", ip);
+        Assert.False(ClientIpResolver.IsViaTunnel(context));
+    }
+
+    [Fact]
+    public void GeneratePin_Generates_Valid_Six_Digit_Pins()
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            var pin = AppSettings.GeneratePin();
+            Assert.Equal(6, pin.Length);
+            Assert.True(int.TryParse(pin, out var num));
+            Assert.InRange(num, 0, 999999);
+        }
+    }
+
+    [Fact]
+    public void DpapiProtector_Encrypts_And_Decrypts_RoundTrip()
+    {
+        string secret = "SuperSecretPassword123!@#";
+        string protectedVal = DpapiProtector.Protect(secret);
+
+        Assert.StartsWith("dpapi:", protectedVal);
+        Assert.NotEqual(secret, protectedVal);
+
+        string unprotected = DpapiProtector.Unprotect(protectedVal);
+        Assert.Equal(secret, unprotected);
+    }
+
+    [Fact]
+    public void DpapiProtector_Passes_Through_Plaintext_When_Not_Prefixed()
+    {
+        string plaintext = "AlreadyPlaintextSecret";
+        Assert.Equal(plaintext, DpapiProtector.Unprotect(plaintext));
+    }
+
+    [Fact]
+    public void FailJob_CleansUp_Files_When_AutoCleanup_Enabled()
+    {
+        var settings = new AppSettings
+        {
+            AutoCleanupAfterPrint = true,
+            UploadDirectory = _tempDirectory
+        };
+        Directory.CreateDirectory(_tempDirectory);
+        var testFile = Path.Combine(_tempDirectory, "job_to_fail.txt");
+        File.WriteAllText(testFile, "temporary job payload");
+
+        var store = CreateStateStore();
+        store.EnsureCreated();
+        var printerService = new PrinterService(NullLogger<PrinterService>.Instance, settings);
+        var manager = new PrintQueueManager(
+            printerService,
+            store,
+            NullLogger<PrintQueueManager>.Instance,
+            settings);
+
+        var job = new PrintJob
+        {
+            Id = Guid.NewGuid().ToString("N")[..8],
+            FilePath = testFile,
+            QueueState = "Processing"
+        };
+
+        manager.CleanupJobFiles(job);
+        Assert.False(File.Exists(testFile));
+    }
+
+    [Fact]
+    public void SecureDelete_Overwrites_File_With_Zeros()
+    {
+        var settings = new AppSettings
+        {
+            AutoCleanupAfterPrint = true,
+            SecureDeleteOnCleanup = true,
+            UploadDirectory = _tempDirectory
+        };
+        Directory.CreateDirectory(_tempDirectory);
+        var testFile = Path.Combine(_tempDirectory, "secure_delete_target.txt");
+        File.WriteAllText(testFile, "sensitive confidential text data");
+
+        var store = CreateStateStore();
+        store.EnsureCreated();
+        var printerService2 = new PrinterService(NullLogger<PrinterService>.Instance, settings);
+        var manager = new PrintQueueManager(
+            printerService2,
+            store,
+            NullLogger<PrintQueueManager>.Instance,
+            settings);
+
+        var job = new PrintJob
+        {
+            Id = Guid.NewGuid().ToString("N")[..8],
+            FilePath = testFile
+        };
+
+        manager.CleanupJobFiles(job);
+        Assert.False(File.Exists(testFile));
+    }
+
+    [Fact]
+    public async Task AuthController_LegacyPair_Returns_410_When_Disabled()
+    {
+        var store = CreateStateStore();
+        store.EnsureCreated();
+        var settings = new AppSettings { EnableLegacyPairEndpoint = false };
+        var authService = new AuthService(settings, NullLogger<AuthService>.Instance, store);
+        var limiter = new AttemptLimiter(5, TimeSpan.FromMinutes(5));
+        var controller = new AuthController(authService, settings, limiter, NullLogger<AuthController>.Instance);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Connection.RemoteIpAddress = IPAddress.Loopback;
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        var result = await controller.PairLegacy(new PairRequest { DeviceName = "OldPhone" });
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(410, statusResult.StatusCode);
+    }
+
+    [Fact]
+    public void FileProcessingService_Rejects_Txt_With_Null_Bytes()
+    {
+        Directory.CreateDirectory(_tempDirectory);
+        var textFile = Path.Combine(_tempDirectory, "null_bytes.txt");
+        File.WriteAllBytes(textFile, new byte[] { (byte)'H', (byte)'i', 0x00, (byte)'!' });
+
+        Assert.False(FileProcessingService.ValidateFileContent(textFile, ".txt"));
+    }
+
+    [Fact]
+    public void FileProcessingService_Rejects_Docx_Without_ContentTypesXml()
+    {
+        Directory.CreateDirectory(_tempDirectory);
+        var fakeDocx = Path.Combine(_tempDirectory, "empty_archive.docx");
+
+        // Create a valid zip archive but without [Content_Types].xml
+        using (var zip = System.IO.Compression.ZipFile.Open(fakeDocx, System.IO.Compression.ZipArchiveMode.Create))
+        {
+            var entry = zip.CreateEntry("dummy.txt");
+            using var writer = new StreamWriter(entry.Open());
+            writer.Write("not a word document");
+        }
+
+        Assert.False(FileProcessingService.ValidateFileContent(fakeDocx, ".docx"));
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<ServerStateContext>

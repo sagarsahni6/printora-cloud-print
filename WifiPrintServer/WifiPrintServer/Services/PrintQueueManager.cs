@@ -433,6 +433,9 @@ public class PrintQueueManager : BackgroundService
         EmitStatus(job, $"Failed: {error}");
         PersistJob(job);
         _logger.LogWarning("Job {JobId} failed: {Error}", job.Id, error);
+
+        if (_settings.AutoCleanupAfterPrint)
+            CleanupJobFiles(job);
     }
 
     /// <summary>
@@ -451,7 +454,7 @@ public class PrintQueueManager : BackgroundService
             {
                 if (File.Exists(job.ConvertedFilePath))
                 {
-                    File.Delete(job.ConvertedFilePath);
+                    SafeDeleteFile(job.ConvertedFilePath);
                     _logger.LogInformation("Cleaned up converted file for job {JobId}: {Path}", job.Id, job.ConvertedFilePath);
                 }
             }
@@ -471,7 +474,7 @@ public class PrintQueueManager : BackgroundService
 
                 if (isManagedUpload && File.Exists(job.FilePath))
                 {
-                    File.Delete(job.FilePath);
+                    SafeDeleteFile(job.FilePath);
                     _logger.LogInformation("Cleaned up uploaded file after print for job {JobId}: {Path}", job.Id, job.FilePath);
                 }
             }
@@ -480,6 +483,33 @@ public class PrintQueueManager : BackgroundService
                 _logger.LogWarning(ex, "Failed to delete uploaded file for job {JobId}: {Path}", job.Id, job.FilePath);
             }
         }
+    }
+
+    private void SafeDeleteFile(string path)
+    {
+        if (!File.Exists(path)) return;
+        if (_settings.SecureDeleteOnCleanup)
+        {
+            try
+            {
+                var length = new FileInfo(path).Length;
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Write);
+                var zeros = new byte[Math.Min(length, 81920)];
+                long written = 0;
+                while (written < length)
+                {
+                    var chunk = (int)Math.Min(zeros.Length, length - written);
+                    fs.Write(zeros, 0, chunk);
+                    written += chunk;
+                }
+                fs.Flush();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to securely overwrite file before deletion: {Path}", path);
+            }
+        }
+        File.Delete(path);
     }
 
     private void EmitStatus(PrintJob job, string message)

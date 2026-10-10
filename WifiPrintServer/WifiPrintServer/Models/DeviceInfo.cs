@@ -10,6 +10,7 @@ public class DeviceInfo
     public string? Model { get; set; }
     public string IpAddress { get; set; } = string.Empty;
     public string Token { get; set; } = string.Empty;
+    public string Jti { get; set; } = string.Empty;
     public DateTime PairedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastSeenAt { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;

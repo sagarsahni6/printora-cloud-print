@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
@@ -10,12 +11,15 @@
 
     <AssemblyName>PrintoraServer</AssemblyName>
     <RootNamespace>WifiPrintServer</RootNamespace>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Authors>Printora Team</Authors>
     <Description>Printora Server - Cloud Print &amp; Scan Service</Description>
 
+    <!-- Single-file self-contained: no .NET install required -->
+    <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
-    <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -51,6 +55,9 @@
 
     <!-- QR Code generation for connection -->
     <PackageReference Include="QRCoder" Version="1.6.0" />
+
+    <!-- DPAPI for secrets at rest (Phase 1 §6) -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

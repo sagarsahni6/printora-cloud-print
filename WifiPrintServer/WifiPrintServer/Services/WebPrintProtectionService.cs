@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using WifiPrintServer.Models;
+using WifiPrintServer.Security;
 
 namespace WifiPrintServer.Services;
 
@@ -20,7 +21,7 @@ public class WebPrintProtectionService
 
     // IP-based sliding window rate limiting
     private readonly ConcurrentDictionary<string, List<DateTime>> _submissionHistory = new();
-    private readonly ConcurrentDictionary<string, List<DateTime>> _failedPinAttempts = new();
+    private readonly AttemptLimiter _pinLimiter = new(5, TimeSpan.FromMinutes(5), 50);
     private readonly object _lock = new();
 
     public WebPrintProtectionService(
@@ -71,26 +72,12 @@ public class WebPrintProtectionService
     }
 
     /// <summary>
-    /// Extracts the real client IP, inspecting Cloudflare and reverse-proxy headers.
+    /// Extracts the real client IP using centralized ClientIpResolver.
     /// </summary>
     public string GetEffectiveClientIp(HttpContext? context)
     {
-        if (context?.Request == null) return "127.0.0.1";
-
-        if (context.Request.Headers.TryGetValue("CF-Connecting-IP", out var cfIp) && !string.IsNullOrWhiteSpace(cfIp))
-        {
-            return cfIp.ToString().Trim();
-        }
-
-        if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var xff) && !string.IsNullOrWhiteSpace(xff))
-        {
-            var first = xff.ToString().Split(',')[0].Trim();
-            if (!string.IsNullOrEmpty(first)) return first;
-        }
-
-        var remote = context.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-        if (remote.StartsWith("::ffff:")) remote = remote.Substring(7);
-        return remote;
+        if (context == null) return "127.0.0.1";
+        return ClientIpResolver.GetClientIp(context);
     }
 
     /// <summary>
@@ -175,18 +162,10 @@ public class WebPrintProtectionService
     {
         var now = DateTime.UtcNow;
 
-        // Anti-brute-force check
-        lock (_lock)
+        if (_pinLimiter.IsLocked(clientIp, out var retryAfter))
         {
-            if (_failedPinAttempts.TryGetValue(clientIp, out var attempts))
-            {
-                attempts.RemoveAll(t => (now - t).TotalMinutes > 5);
-                if (attempts.Count >= 5)
-                {
-                    _logger.LogWarning("IP {Ip} is temporarily locked out from PIN verification due to repeated failures", clientIp);
-                    return (false, null, null, "Too many incorrect PIN attempts. Please wait 5 minutes before trying again.");
-                }
-            }
+            _logger.LogWarning("IP {Ip} is temporarily locked out from PIN verification due to repeated failures", clientIp);
+            return (false, null, null, "Too many incorrect PIN attempts. Please wait 5 minutes before trying again.");
         }
 
         var cleanPin = pin?.Trim() ?? "";
@@ -194,36 +173,41 @@ public class WebPrintProtectionService
 
         // Compare against rotating Connection PIN
         if (!string.IsNullOrEmpty(_settings.CurrentConnectionPin) &&
-            string.Equals(_settings.CurrentConnectionPin, cleanPin, StringComparison.OrdinalIgnoreCase))
+            ConstantTimeEquals(_settings.CurrentConnectionPin, cleanPin))
         {
             isValid = true;
         }
         // Also allow the permanent QR pairing token
         else if (!string.IsNullOrEmpty(_settings.CurrentQrPairingToken) &&
-                 string.Equals(_settings.CurrentQrPairingToken, cleanPin, StringComparison.OrdinalIgnoreCase))
+                 ConstantTimeEquals(_settings.CurrentQrPairingToken, cleanPin))
         {
             isValid = true;
         }
 
         if (!isValid)
         {
-            lock (_lock)
-            {
-                var list = _failedPinAttempts.GetOrAdd(clientIp, _ => new List<DateTime>());
-                list.Add(now);
-            }
+            _pinLimiter.RecordFailure(clientIp);
             _logger.LogWarning("Failed PIN attempt from IP {Ip}: '{Pin}'", clientIp, cleanPin);
             return (false, null, null, "Invalid PIN. Please enter the 6-digit PIN displayed on the host PC screen.");
         }
 
         // Clear failed attempts on success
-        _failedPinAttempts.TryRemove(clientIp, out _);
+        _pinLimiter.Reset(clientIp);
 
         var token = CreateSessionToken(clientIp, 2);
         var expiresAt = now.AddHours(2);
         _logger.LogInformation("PIN successfully verified for IP {Ip}. Session issued until {Exp}", clientIp, expiresAt);
 
         return (true, token, expiresAt, null);
+    }
+
+    private static bool ConstantTimeEquals(string? a, string? b)
+    {
+        if (a == null || b == null) return a == b;
+        var aBytes = Encoding.UTF8.GetBytes(a);
+        var bBytes = Encoding.UTF8.GetBytes(b);
+        if (aBytes.Length != bBytes.Length) return false;
+        return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
 
     /// <summary>

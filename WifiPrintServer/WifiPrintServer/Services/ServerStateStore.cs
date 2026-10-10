@@ -57,6 +57,7 @@ public class ServerStateStore
             AddColumnIfMissing("SessionStartedAt", "TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'");
             AddColumnIfMissing("SessionPrintCount", "INTEGER NOT NULL DEFAULT 0");
             AddColumnIfMissing("LastPrintAt", "TEXT NULL");
+            AddColumnIfMissing("Jti", "TEXT NOT NULL DEFAULT ''");
         }
         catch (Exception ex)
         {
@@ -181,9 +182,14 @@ public class ServerStateStore
         Model = device.Model,
         IpAddress = device.IpAddress,
         Token = device.Token,
+        Jti = device.Jti,
         PairedAt = device.PairedAt,
         LastSeenAt = device.LastSeenAt,
         IsActive = device.IsActive,
-        IsBlocked = device.IsBlocked
+        IsBlocked = device.IsBlocked,
+        SessionStartedAt = device.SessionStartedAt,
+        ConnectedViaTunnel = device.ConnectedViaTunnel,
+        SessionPrintCount = device.SessionPrintCount,
+        LastPrintAt = device.LastPrintAt
     };
 }

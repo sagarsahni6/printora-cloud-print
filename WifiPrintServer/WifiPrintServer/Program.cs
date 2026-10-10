@@ -1,11 +1,15 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using WifiPrintServer.Data;
+using WifiPrintServer.Hubs;
 using WifiPrintServer.Models;
 using WifiPrintServer.Services;
 
@@ -16,6 +20,7 @@ namespace WifiPrintServer;
 /// </summary>
 public partial class Program
 {
+    private static Timer? _pinRotationTimer;
     public static WebApplication? WebApp { get; private set; }
     public static AppSettings Settings { get; private set; } = null!;
     public static PrintQueueManager? QueueManager { get; private set; }
@@ -56,11 +61,17 @@ public partial class Program
         ServerCertificate = GetOrCreateSelfSignedCert();
         builder.Services.Configure<KestrelServerOptions>(k =>
         {
+            k.Limits.MaxRequestBodySize = Settings.MaxFileSizeMB * 1024L * 1024L;
             k.ListenAnyIP(Settings.ServerPort, lo => lo.UseHttps(ServerCertificate));
+        });
+        builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>
+        {
+            o.MultipartBodyLengthLimit = Settings.MaxFileSizeMB * 1024L * 1024L;
         });
 
         // Register services
         builder.Services.AddSingleton(Settings);
+        builder.Services.AddSingleton(new AttemptLimiter(5, TimeSpan.FromMinutes(5), 50));
         builder.Services.AddDbContextFactory<ServerStateContext>(options =>
         {
             var dbPath = Path.Combine(AppSettings.AppDataDir, "printora.db");
@@ -79,6 +90,7 @@ public partial class Program
         builder.Services.AddSingleton<TunnelService>();
         builder.Services.AddSingleton<WebPrintProtectionService>();
         builder.Services.AddHostedService(sp => sp.GetRequiredService<PrintQueueManager>());
+        builder.Services.AddSignalR();
 
         // Add controllers
         builder.Services.AddControllers()
@@ -97,9 +109,18 @@ public partial class Program
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.AllowAnyOrigin()
+                var origins = new List<string>
+                {
+                    $"https://localhost:{Settings.ServerPort}",
+                    $"http://localhost:{Settings.ServerPort}"
+                };
+                if (!string.IsNullOrWhiteSpace(Settings.CustomPublicUrl))
+                    origins.Add(Settings.CustomPublicUrl.TrimEnd('/'));
+
+                policy.WithOrigins(origins.ToArray())
                       .AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .AllowAnyMethod()
+                      .AllowCredentials();
             });
         });
 
@@ -146,6 +167,23 @@ public partial class Program
                             return Task.CompletedTask;
                         }
 
+                        var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+                        if (!string.IsNullOrEmpty(device.Jti) && !string.IsNullOrEmpty(jti) &&
+                            !string.Equals(device.Jti, jti, StringComparison.Ordinal))
+                        {
+                            context.Fail("Token has been revoked or superseded");
+                            return Task.CompletedTask;
+                        }
+
+                        if (Settings.SessionDurationMinutes > 0 && device.SessionStartedAt != default)
+                        {
+                            if ((DateTime.UtcNow - device.SessionStartedAt).TotalMinutes > Settings.SessionDurationMinutes)
+                            {
+                                context.Fail("Session expired");
+                                return Task.CompletedTask;
+                            }
+                        }
+
                         authService.MarkDeviceSeen(deviceId);
                         return Task.CompletedTask;
                     }
@@ -163,15 +201,51 @@ public partial class Program
 
         // Middleware pipeline
         WebApp.UseCors();
+        WebApp.Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            if (context.Request.IsHttps)
+                context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+
+            if (context.Request.Path.StartsWithSegments("/" + Settings.HostIdentifier))
+                context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'";
+
+            await next();
+        });
         WebApp.UseAuthentication();
         WebApp.UseAuthorization();
         WebApp.MapControllers();
+        WebApp.MapHub<PrintStatusHub>("/ws/status");
 
         // Resolve singletons for WPF access
         QueueManager = WebApp.Services.GetRequiredService<PrintQueueManager>();
         AuthServiceInstance = WebApp.Services.GetRequiredService<AuthService>();
         PrinterServiceInstance = WebApp.Services.GetRequiredService<PrinterService>();
         TunnelServiceInstance = WebApp.Services.GetRequiredService<TunnelService>();
+
+        QueueManager.OnJobStatusChanged += update =>
+        {
+            try
+            {
+                var hub = WebApp.Services.GetRequiredService<IHubContext<PrintStatusHub>>();
+                hub.Clients.Group(update.SourceDeviceId ?? "").SendAsync("JobStatus", update);
+            }
+            catch { }
+        };
+
+        var fileService = WebApp.Services.GetRequiredService<FileProcessingService>();
+        fileService.CleanupOrphanedFiles(TimeSpan.FromHours(1));
+
+        _pinRotationTimer = new Timer(_ =>
+        {
+            try
+            {
+                Settings.CurrentConnectionPin = AppSettings.GeneratePin();
+                Settings.Save();
+            }
+            catch { }
+        }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
 
         // Auto-start cloud relay tunnel if enabled
         if (Settings.EnableCloudRelay)
@@ -234,9 +308,37 @@ public partial class Program
         {
             try
             {
-                return new X509Certificate2(certPath, password);
+                var loaded = new X509Certificate2(certPath, password, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+                if (loaded.HasPrivateKey)
+                {
+                    // Check if expiring within 30 days
+                    if (loaded.NotAfter < DateTime.UtcNow.AddDays(30))
+                    {
+                        try { File.Delete(certPath); } catch { }
+                    }
+                    else
+                    {
+                        // Check if current local IP is present in certificate SAN
+                        var currentIp = DiscoveryService.GetLocalIpAddress();
+                        var san = loaded.Extensions.OfType<X509SubjectAlternativeNameExtension>().FirstOrDefault();
+                        if (currentIp != null && san != null && System.Net.IPAddress.TryParse(currentIp, out var parsedIp) &&
+                            !san.EnumerateIPAddresses().Any(ip => ip.Equals(parsedIp)))
+                        {
+                            try { File.Delete(certPath); } catch { }
+                        }
+                        else
+                        {
+                            Settings.CertificateFingerprint = loaded.GetCertHashString(HashAlgorithmName.SHA256);
+                            Settings.Save();
+                            return loaded;
+                        }
+                    }
+                }
             }
-            catch { /* regenerate if corrupt */ }
+            catch
+            {
+                try { File.Delete(certPath); } catch { }
+            }
         }
 
         // Generate new self-signed cert
@@ -266,6 +368,10 @@ public partial class Program
         var pfxBytes = cert.Export(X509ContentType.Pfx, password);
         File.WriteAllBytes(certPath, pfxBytes);
 
-        return new X509Certificate2(pfxBytes, password);
+        var newCert = new X509Certificate2(pfxBytes, password, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+        Settings.CertificateFingerprint = newCert.GetCertHashString(HashAlgorithmName.SHA256);
+        Settings.Save();
+
+        return newCert;
     }
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+using WifiPrintServer.Security;
 
 namespace WifiPrintServer.Models;
 
@@ -28,7 +29,7 @@ public class AppSettings
     public string HostIdentifier { get; set; } = GenerateHostIdentifier();
     public string JwtSecret { get; set; } = GenerateSecureToken(48);
     public string CertificatePassword { get; set; } = GenerateSecureToken(24);
-    public int JwtExpirationDays { get; set; } = 365;
+    public int JwtExpirationDays { get; set; } = 30;
     public string? DefaultPrinter { get; set; }
     public bool AutoStart { get; set; } = false;
     public bool MinimizeToTray { get; set; } = true;
@@ -47,7 +48,7 @@ public class AppSettings
     /// <summary>
     /// If true, devices connecting from the same local Wi-Fi / subnet are automatically approved without prompt.
     /// </summary>
-    public bool AutoApproveSameNetwork { get; set; } = true;
+    public bool AutoApproveSameNetwork { get; set; } = false;
 
     /// <summary>
     /// If true, devices connecting from outside the local network (routed/different subnet) MUST scan the QR code to pair.
@@ -70,7 +71,7 @@ public class AppSettings
     /// When true, starts a Cloudflare Quick Tunnel so phones can print from any network worldwide.
     /// No Cloudflare account needed — uses free ephemeral tunnels.
     /// </summary>
-    public bool EnableCloudRelay { get; set; } = true;
+    public bool EnableCloudRelay { get; set; } = false;
 
     /// <summary>
     /// Optional permanent public URL, DDNS, or Cloudflare Tunnel domain (e.g. https://print.yourdomain.com).
@@ -130,6 +131,31 @@ public class AppSettings
     public int WebPrintRateLimitPerHour { get; set; } = 15;
 
     /// <summary>
+    /// If true, file bytes are overwritten with zeros before deletion. Best-effort on SSDs.
+    /// </summary>
+    public bool SecureDeleteOnCleanup { get; set; } = false;
+
+    /// <summary>
+    /// If false, the legacy /api/auth/pair endpoint returns 410 Gone. Default disabled for new installs.
+    /// </summary>
+    public bool EnableLegacyPairEndpoint { get; set; } = false;
+
+    /// <summary>
+    /// Set to true after the user completes the first-run setup wizard (Home/Shop mode choice).
+    /// </summary>
+    public bool FirstRunCompleted { get; set; } = false;
+
+    /// <summary>
+    /// SHA-256 fingerprint of the current server certificate. Updated on cert creation/rotation.
+    /// </summary>
+    public string? CertificateFingerprint { get; set; }
+
+    /// <summary>
+    /// Set to true after the cloud relay explanation has been shown to the user.
+    /// </summary>
+    public bool CloudRelayExplanationShown { get; set; } = false;
+
+    /// <summary>
     /// Generates a permanent unique identifier combining the machine name with a random 5-digit number.
     /// e.g. DESKTOP-PLK2AIK-W-48291
     /// </summary>
@@ -141,10 +167,7 @@ public class AppSettings
         if (string.IsNullOrWhiteSpace(cleanMachineName))
             cleanMachineName = "HOST-PC";
 
-        var bytes = new byte[4];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(bytes);
-        var num = Math.Abs(BitConverter.ToInt32(bytes, 0)) % 90000 + 10000;
+        var num = RandomNumberGenerator.GetInt32(10000, 100000);
         return $"{cleanMachineName}-{num}";
     }
 
@@ -178,10 +201,7 @@ public class AppSettings
     /// </summary>
     public static string GeneratePin()
     {
-        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
-        var bytes = new byte[4];
-        rng.GetBytes(bytes);
-        var num = Math.Abs(BitConverter.ToInt32(bytes, 0)) % 1000000;
+        var num = RandomNumberGenerator.GetInt32(0, 1000000);
         return num.ToString("D6");
     }
 
@@ -225,8 +245,12 @@ public class AppSettings
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (settings != null)
                 {
+                    // Unprotect DPAPI-protected secrets for in-memory use
+                    settings.JwtSecret = DpapiProtector.Unprotect(settings.JwtSecret);
+                    settings.CertificatePassword = DpapiProtector.Unprotect(settings.CertificatePassword);
+                    settings.CurrentQrPairingToken = DpapiProtector.Unprotect(settings.CurrentQrPairingToken);
                     settings.NormalizeSecrets();
-                    settings.Save();
+                    settings.Save(); // re-save to migrate plaintext → DPAPI
                     return settings;
                 }
             }
@@ -247,7 +271,15 @@ public class AppSettings
     {
         Directory.CreateDirectory(SettingsDir);
         NormalizeSecrets();
-        var json = JsonSerializer.Serialize(this, new JsonSerializerOptions
+
+        // Create a copy with DPAPI-protected secrets for disk storage
+        var diskCopy = JsonSerializer.Deserialize<AppSettings>(
+            JsonSerializer.Serialize(this))!;
+        diskCopy.JwtSecret = DpapiProtector.Protect(JwtSecret);
+        diskCopy.CertificatePassword = DpapiProtector.Protect(CertificatePassword);
+        diskCopy.CurrentQrPairingToken = DpapiProtector.Protect(CurrentQrPairingToken);
+
+        var json = JsonSerializer.Serialize(diskCopy, new JsonSerializerOptions
         {
             WriteIndented = true
         });
@@ -256,11 +288,14 @@ public class AppSettings
 
     private void NormalizeSecrets()
     {
+        // Note: secrets are already unprotected (plaintext) in memory at this point.
+        // Do NOT regenerate just because they were DPAPI-protected — that bug was
+        // destroying secrets on every load.
         if (string.IsNullOrWhiteSpace(JwtSecret) || JwtSecret.Length < 32)
             JwtSecret = GenerateSecureToken(48);
 
-        if (string.IsNullOrWhiteSpace(CertificatePassword) || CertificatePassword.Length < 16)
-            CertificatePassword = GenerateSecureToken(24);
+        if (string.IsNullOrWhiteSpace(CertificatePassword) || CertificatePassword.Length < 16 || CertificatePassword.Length > 32)
+            CertificatePassword = GenerateAlphanumericPassword(24);
 
         if (string.IsNullOrWhiteSpace(CurrentQrPairingToken))
             CurrentQrPairingToken = GenerateSecureToken(16);
@@ -272,9 +307,22 @@ public class AppSettings
             HostIdentifier = GenerateHostIdentifier();
     }
 
+    public static string GenerateAlphanumericPassword(int length)
+    {
+        const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var bytes = RandomNumberGenerator.GetBytes(length);
+        var charsArray = new char[length];
+        for (int i = 0; i < length; i++)
+        {
+            charsArray[i] = chars[bytes[i] % chars.Length];
+        }
+        return new string(charsArray);
+    }
+
     public static string GenerateSecureToken(int numBytes)
     {
         var bytes = RandomNumberGenerator.GetBytes(numBytes);
         return Convert.ToBase64String(bytes);
     }
 }
+

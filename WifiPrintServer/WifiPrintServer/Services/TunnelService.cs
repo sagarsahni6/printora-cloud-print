@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 namespace WifiPrintServer.Services;
@@ -17,6 +18,10 @@ public class TunnelService : IDisposable
     private string? _publicUrl;
     private bool _isStarting;
     private readonly object _lock = new();
+
+    public const string PinnedVersion = "2024.12.2";
+    public const string PinnedSha256 = ""; // TODO: Fill real hash for pinned release; fail-closed unless --allow-unverified-cloudflared
+    private static readonly string DownloadUrl = $"https://github.com/cloudflare/cloudflared/releases/download/{PinnedVersion}/cloudflared-windows-amd64.exe";
 
     private static readonly string CloudflaredDir = Path.Combine(
         AppSettings.AppDataDir, "cloudflared");
@@ -187,8 +192,6 @@ public class TunnelService : IDisposable
     {
         Directory.CreateDirectory(CloudflaredDir);
 
-        const string downloadUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe";
-
         using var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromMinutes(5);
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("WifiPrintServer/2.0");
@@ -196,7 +199,7 @@ public class TunnelService : IDisposable
         var tempPath = CloudflaredExePath + ".tmp";
         try
         {
-            using var response = await httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await httpClient.GetAsync(DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
             using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -204,12 +207,30 @@ public class TunnelService : IDisposable
                 await response.Content.CopyToAsync(fileStream);
             }
 
+            // Verify integrity
+            using (var sha256 = SHA256.Create())
+            {
+                var hashBytes = sha256.ComputeHash(File.ReadAllBytes(tempPath));
+                var hash = Convert.ToHexString(hashBytes);
+                bool allowUnverified = Environment.GetCommandLineArgs().Contains("--allow-unverified-cloudflared");
+
+                if (string.IsNullOrEmpty(PinnedSha256))
+                {
+                    if (!allowUnverified)
+                        throw new InvalidOperationException("Cloudflared SHA-256 hash is not configured. Set PinnedSha256 or pass --allow-unverified-cloudflared.");
+                }
+                else if (!hash.Equals(PinnedSha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException($"Cloudflared SHA-256 hash mismatch: expected {PinnedSha256}, got {hash}");
+                }
+            }
+
             // Atomic rename
             if (File.Exists(CloudflaredExePath))
                 File.Delete(CloudflaredExePath);
             File.Move(tempPath, CloudflaredExePath);
 
-            _logger.LogInformation("cloudflared.exe downloaded successfully to {Path}", CloudflaredExePath);
+            _logger.LogInformation("cloudflared.exe downloaded and verified successfully to {Path}", CloudflaredExePath);
         }
         catch
         {

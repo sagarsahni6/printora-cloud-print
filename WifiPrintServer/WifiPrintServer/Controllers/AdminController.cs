@@ -220,6 +220,18 @@ public class AdminController : ControllerBase
     }
 
     /// <summary>
+    /// POST /api/admin/rotate-qr — Rotates the QR pairing token. Local-only.
+    /// </summary>
+    [LocalOnly]
+    [HttpPost("/api/admin/rotate-qr")]
+    public IActionResult RotateQr()
+    {
+        _settings.CurrentQrPairingToken = AppSettings.GenerateSecureToken(16);
+        _settings.Save();
+        return Ok(new { success = true, qrToken = _settings.CurrentQrPairingToken });
+    }
+
+    /// <summary>
     /// POST /api/web/verify-pin — Optional fallback verification with 6-digit PIN.
     /// </summary>
     [HttpPost("/api/web/verify-pin")]

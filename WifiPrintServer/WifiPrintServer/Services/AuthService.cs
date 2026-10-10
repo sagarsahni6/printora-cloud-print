@@ -93,8 +93,9 @@ public class AuthService
                     SessionStartedAt = DateTime.UtcNow
                 };
 
-                var token = GenerateJwtToken(device.Id, device.Name);
-                device.Token = token;
+                var (token, jti) = GenerateJwtToken(device.Id, device.Name);
+                device.Jti = jti;
+                device.Token = string.Empty;
                 _pairedDevices[device.Id] = device;
                 SavePairedDevices();
                 _stateStore.UpsertApproval(approval, "Approved");
@@ -142,8 +143,9 @@ public class AuthService
             ConnectedViaTunnel = connectedViaTunnel
         };
 
-        var token = GenerateJwtToken(device.Id, device.Name);
-        device.Token = token;
+        var (token, jti) = GenerateJwtToken(device.Id, device.Name);
+        device.Jti = jti;
+        device.Token = string.Empty;
         _pairedDevices[device.Id] = device;
         SavePairedDevices();
 
@@ -188,16 +190,17 @@ public class AuthService
     //  JWT Token Management
     // ═══════════════════════════════════════════════════════════════
 
-    private string GenerateJwtToken(string deviceId, string deviceName)
+    private (string Token, string Jti) GenerateJwtToken(string deviceId, string deviceName)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.JwtSecret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var jti = Guid.NewGuid().ToString("N");
 
         var claims = new[]
         {
             new Claim("deviceId", deviceId),
             new Claim("deviceName", deviceName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, jti)
         };
 
         var token = new JwtSecurityToken(
@@ -207,7 +210,7 @@ public class AuthService
             expires: DateTime.UtcNow.AddDays(_settings.JwtExpirationDays),
             signingCredentials: creds);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return (new JwtSecurityTokenHandler().WriteToken(token), jti);
     }
 
     public string? ValidateToken(string token)
@@ -334,7 +337,26 @@ public class AuthService
         {
             var devices = _stateStore.LoadDevices();
             foreach (var device in devices)
+            {
+                if (string.IsNullOrEmpty(device.Jti) && !string.IsNullOrEmpty(device.Token))
+                {
+                    try
+                    {
+                        var handler = new JwtSecurityTokenHandler();
+                        if (handler.CanReadToken(device.Token))
+                        {
+                            var jwt = handler.ReadJwtToken(device.Token);
+                            var claimJti = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
+                            if (!string.IsNullOrEmpty(claimJti))
+                                device.Jti = claimJti;
+                        }
+                    }
+                    catch { }
+                    device.Token = string.Empty;
+                    _stateStore.UpsertDevice(device);
+                }
                 _pairedDevices[device.Id] = device;
+            }
 
             _logger.LogInformation("Loaded {Count} paired devices from persistent store", devices.Count);
         }

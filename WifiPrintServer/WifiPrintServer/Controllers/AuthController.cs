@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WifiPrintServer.Models;
@@ -15,12 +17,18 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
     private readonly AppSettings _settings;
+    private readonly AttemptLimiter _attemptLimiter;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(AuthService authService, AppSettings settings, ILogger<AuthController> logger)
+    public AuthController(
+        AuthService authService,
+        AppSettings settings,
+        AttemptLimiter attemptLimiter,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
         _settings = settings;
+        _attemptLimiter = attemptLimiter;
         _logger = logger;
     }
 
@@ -40,17 +48,13 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail("Device name required"));
 
         var remoteIp = HttpContext.Connection.RemoteIpAddress;
-        var ipAddress = remoteIp?.ToString() ?? "unknown";
-        if (ipAddress.StartsWith("::ffff:"))
-            ipAddress = ipAddress.Substring(7);
+        var ipAddress = ClientIpResolver.GetClientIp(HttpContext);
+        bool isViaTunnel = ClientIpResolver.IsViaTunnel(HttpContext);
 
-        // Detect if this request came through the Cloudflare tunnel.
-        // cloudflared sets Cf-Connecting-Ip header with the real client IP.
-        bool isViaTunnel = HttpContext.Request.Headers.ContainsKey("Cf-Connecting-Ip");
-        if (isViaTunnel)
+        if (_attemptLimiter.IsLocked(ipAddress, out var retryAfter))
         {
-            // Use the real client IP from the tunnel header
-            ipAddress = HttpContext.Request.Headers["Cf-Connecting-Ip"].FirstOrDefault() ?? ipAddress;
+            Response.Headers["Retry-After"] = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+            return StatusCode(429, ApiResponse<object>.Fail("Too many failed connection attempts. Please try again later."));
         }
 
         bool isSameNetwork = !isViaTunnel && remoteIp != null && NetworkUtils.IsSameLocalSubnet(remoteIp);
@@ -64,6 +68,7 @@ public class AuthController : ControllerBase
         // 1. Same-network Wi-Fi users (Auto-connect without prompt or QR scan)
         if (isSameNetwork && _settings.AutoApproveSameNetwork)
         {
+            _attemptLimiter.Reset(ipAddress);
             var autoAuth = _authService.AutoApproveLocalDevice(
                 request.DeviceName,
                 request.DeviceModel ?? "Unknown",
@@ -78,8 +83,9 @@ public class AuthController : ControllerBase
         // 2. Validate QR token if provided (remote users scanning the printed QR code)
         if (hasQr)
         {
-            if (!string.Equals(request.QrToken?.Trim(), _settings.CurrentQrPairingToken?.Trim(), StringComparison.Ordinal))
+            if (!ConstantTimeEquals(request.QrToken?.Trim(), _settings.CurrentQrPairingToken?.Trim()))
             {
+                _attemptLimiter.RecordFailure(ipAddress);
                 _logger.LogWarning("Connection rejected for device {Name} at {IP}: Invalid QR token",
                     request.DeviceName, ipAddress);
                 return StatusCode(403, ApiResponse<object>.Fail(
@@ -90,14 +96,16 @@ public class AuthController : ControllerBase
         // 3. Validate PIN if provided — entering the active on-screen PIN approves immediately
         if (hasPin)
         {
-            if (!string.Equals(cleanPin, _settings.CurrentConnectionPin?.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (!ConstantTimeEquals(cleanPin, _settings.CurrentConnectionPin?.Trim()))
             {
+                _attemptLimiter.RecordFailure(ipAddress);
                 _logger.LogWarning("Connection rejected for device {Name} at {IP}: Invalid PIN",
                     request.DeviceName, ipAddress);
                 return StatusCode(403, ApiResponse<object>.Fail(
                     "Invalid PIN. Please enter the current 6-digit PIN displayed on the PC screen."));
             }
 
+            _attemptLimiter.Reset(ipAddress);
             var pinAuth = _authService.AutoApproveLocalDevice(
                 request.DeviceName,
                 request.DeviceModel ?? "Unknown",
@@ -131,12 +139,14 @@ public class AuthController : ControllerBase
 
         if (result != null)
         {
+            _attemptLimiter.Reset(ipAddress);
             _logger.LogInformation("Device approved by PC admin: {Name} (Tunnel={Tunnel})",
                 request.DeviceName, isViaTunnel);
             return Ok(ApiResponse<AuthResponse>.Ok(result, "Connected successfully after admin approval"));
         }
 
         // Denied or timed out
+        _attemptLimiter.RecordFailure(ipAddress);
         _logger.LogWarning("Device denied or timed out by PC admin: {Name}", request.DeviceName);
         return StatusCode(403, ApiResponse<object>.Fail("Connection request was denied or timed out on the PC server."));
     }
@@ -145,22 +155,32 @@ public class AuthController : ControllerBase
     /// POST /api/auth/pair — Legacy PIN-based pairing (kept for backward compatibility).
     /// Redirects to the approval flow, ignoring the PIN.
     /// </summary>
+    [Obsolete("Use /api/auth/request")]
     [AllowAnonymous]
     [HttpPost("pair")]
     public async Task<IActionResult> PairLegacy([FromBody] PairRequest request)
     {
+        if (!_settings.EnableLegacyPairEndpoint)
+        {
+            return StatusCode(410, ApiResponse<object>.Fail("The legacy pair endpoint is disabled. Use /api/auth/request."));
+        }
+
         if (string.IsNullOrEmpty(request.DeviceName))
             return BadRequest(ApiResponse<object>.Fail("Device name required"));
 
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        if (ipAddress.StartsWith("::ffff:"))
-            ipAddress = ipAddress.Substring(7);
+        var ipAddress = ClientIpResolver.GetClientIp(HttpContext);
+        if (_attemptLimiter.IsLocked(ipAddress, out var retryAfter))
+        {
+            Response.Headers["Retry-After"] = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+            return StatusCode(429, ApiResponse<object>.Fail("Too many failed attempts. Please try again later."));
+        }
 
         // If PIN matches the server's current rotating PIN, auto-approve immediately
         var cleanPin = request.Pin?.Trim().Replace(" ", "").Replace("-", "");
         if (!string.IsNullOrWhiteSpace(cleanPin) &&
-            string.Equals(cleanPin, _settings.CurrentConnectionPin?.Trim(), StringComparison.OrdinalIgnoreCase))
+            ConstantTimeEquals(cleanPin, _settings.CurrentConnectionPin?.Trim()))
         {
+            _attemptLimiter.Reset(ipAddress);
             var pinAuth = _authService.AutoApproveLocalDevice(
                 request.DeviceName,
                 "Unknown",
@@ -174,9 +194,22 @@ public class AuthController : ControllerBase
             ipAddress);
 
         if (result != null)
+        {
+            _attemptLimiter.Reset(ipAddress);
             return Ok(ApiResponse<AuthResponse>.Ok(result, "Pairing successful"));
+        }
 
+        _attemptLimiter.RecordFailure(ipAddress);
         return Unauthorized(ApiResponse<object>.Fail("Connection denied or timed out"));
+    }
+
+    private static bool ConstantTimeEquals(string? a, string? b)
+    {
+        if (a == null || b == null) return a == b;
+        var aBytes = Encoding.UTF8.GetBytes(a);
+        var bBytes = Encoding.UTF8.GetBytes(b);
+        if (aBytes.Length != bBytes.Length) return false;
+        return CryptographicOperations.FixedTimeEquals(aBytes, bBytes);
     }
 
     /// <summary>
