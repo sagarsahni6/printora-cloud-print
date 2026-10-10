@@ -9,17 +9,17 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/download/windows/setup.exe",
-        destination: "https://github.com/sagarsahni6/printora-cloud-print/releases/download/v2.0.0/PrintoraServer-Setup.exe",
+        destination: "/api/download/windows",
         permanent: false,
       },
       {
         source: "/download/windows/portable.zip",
-        destination: "https://github.com/sagarsahni6/printora-cloud-print/releases/download/v2.0.0/PrintoraServer-Windows-v2.0.0.zip",
+        destination: "/api/download/windows-portable",
         permanent: false,
       },
       {
         source: "/download/android/app.apk",
-        destination: "https://github.com/sagarsahni6/printora-cloud-print/releases/download/v2.0.0/Printora-Android-v2.0.0.apk",
+        destination: "/api/download/android",
         permanent: false,
       },
     ];

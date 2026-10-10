@@ -67,7 +67,7 @@ export default function DownloadWindowsPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Server v2.0.0</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Server v2.2.2</h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                 Stable Release
               </span>
@@ -88,7 +88,7 @@ export default function DownloadWindowsPage() {
             </a>
             <a
               href={siteConfig.directWindowsZipUrl}
-              download="PrintoraServer-Windows-v2.0.0.zip"
+              download="PrintoraServer-Windows-v2.2.2.zip"
               className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium text-xs transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
             >
               <Download className="w-3.5 h-3.5" />
@@ -126,7 +126,7 @@ export default function DownloadWindowsPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                <span>100% open-source codebase with public commit logs</span>
+                <span>Source-available codebase with public commit logs</span>
               </div>
               <div className="flex items-center gap-2">
                 <Terminal className="w-3.5 h-3.5 text-blue-500 shrink-0" />
