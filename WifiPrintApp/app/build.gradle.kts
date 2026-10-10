@@ -11,12 +11,12 @@ plugins {
 
 android {
     namespace = "com.wifiprint.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.printora.app"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 6
         versionName = "2.2.2"
 
@@ -58,10 +58,8 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             val releaseSigning = signingConfigs.getByName("release")
-            signingConfig = if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
-                releaseSigning
-            } else {
-                signingConfigs.getByName("debug")
+            if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
+                signingConfig = releaseSigning
             }
         }
     }
@@ -136,6 +134,9 @@ dependencies {
 
     // DataStore for preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Security & EncryptedSharedPreferences
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // CameraX (for Document Scanner + QR Scanner)
     implementation("androidx.camera:camera-core:1.3.1")

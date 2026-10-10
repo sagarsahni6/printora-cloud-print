@@ -20,6 +20,7 @@ import com.wifiprint.app.data.models.PrintSettings
 import com.wifiprint.app.data.models.PrinterInfo
 import com.wifiprint.app.data.models.ServerInfo
 import com.wifiprint.app.data.models.ServerPrintJob
+import com.wifiprint.app.data.security.SecureTokenStorage
 import com.wifiprint.app.network.CertificatePinning
 import com.wifiprint.app.network.NetworkMonitor
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -59,10 +60,11 @@ data class ServerConnectionStatus(
 
 @Singleton
 class PrintRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val printJobDao: PrintJobDao,
     private val serverDao: ServerDao,
-    private val okHttpClient: OkHttpClient
+    private val okHttpClient: OkHttpClient,
+    private val secureTokenStorage: SecureTokenStorage
 ) {
     private val gson = Gson()
 
@@ -104,12 +106,16 @@ class PrintRepository @Inject constructor(
             else -> "https://localhost:${server.port}/"
         }
 
-        currentToken = server.token
+        // Load token securely from SecureTokenStorage, or migrate from legacy entity token
+        val token = secureTokenStorage.getToken(server.id) ?: server.token?.also { legacyToken ->
+            secureTokenStorage.saveToken(server.id, legacyToken)
+        }
+        currentToken = token
         observedServerFingerprint = null
         val useTunnelTls = isTunnelUrl(currentBaseUrl)
         currentApiService = createApiService(
             baseUrl = currentBaseUrl,
-            token = server.token,
+            token = token,
             pinnedFingerprint = if (useTunnelTls) null else server.certificateFingerprint,
             allowTrustOnFirstUse = useTunnelTls || server.certificateFingerprint.isNullOrBlank()
         ) { fingerprint ->
@@ -221,12 +227,15 @@ class PrintRepository @Inject constructor(
                     val authData = response.body()!!.data!!
                     val fingerprint = capturedFingerprint ?: ""
 
+                    val serverId = if (isTunnelTarget) (tunnelUrl ?: "$serverIp:$port") else "$serverIp:$port"
+                    secureTokenStorage.saveToken(serverId, authData.token)
+
                     val server = ServerInfo(
-                        id = if (isTunnelTarget) (tunnelUrl ?: "$serverIp:$port") else "$serverIp:$port",
+                        id = serverId,
                         name = authData.serverName,
                         ipAddress = serverIp,
                         port = port,
-                        token = authData.token,
+                        token = null,
                         certificateFingerprint = fingerprint.ifBlank { null },
                         isPaired = true,
                         lastConnected = System.currentTimeMillis(),
@@ -278,12 +287,15 @@ class PrintRepository @Inject constructor(
                 val fingerprint = capturedFingerprint
                     ?: return Result.failure(Exception("Server certificate was not captured during pairing"))
 
+                val serverId = "$serverIp:$port"
+                secureTokenStorage.saveToken(serverId, authData.token)
+
                 val server = ServerInfo(
-                    id = "$serverIp:$port",
+                    id = serverId,
                     name = authData.serverName,
                     ipAddress = serverIp,
                     port = port,
-                    token = authData.token,
+                    token = null,
                     certificateFingerprint = fingerprint,
                     isPaired = true,
                     lastConnected = System.currentTimeMillis(),
@@ -638,7 +650,7 @@ class PrintRepository @Inject constructor(
                         val useTunnelTls = isTunnelUrl(currentBaseUrl)
                         currentApiService = createApiService(
                             baseUrl = currentBaseUrl,
-                            token = server.token,
+                            token = currentToken ?: secureTokenStorage.getToken(server.id) ?: server.token,
                             pinnedFingerprint = if (useTunnelTls) null else server.certificateFingerprint,
                             allowTrustOnFirstUse = useTunnelTls || server.certificateFingerprint.isNullOrBlank()
                         ) { fingerprint ->
@@ -701,7 +713,10 @@ class PrintRepository @Inject constructor(
                 onCertificateSeen = onCertificateSeen
             )
             clientBuilder.sslSocketFactory(tlsBundle.sslSocketFactory, tlsBundle.trustManager)
-            clientBuilder.hostnameVerifier { _, _ -> true }
+            clientBuilder.hostnameVerifier { hostname, _ ->
+                val targetHost = runCatching { java.net.URI(baseUrl).host }.getOrNull()
+                hostname.equals(targetHost, ignoreCase = true) || hostname == "localhost" || hostname == "127.0.0.1"
+            }
         }
 
         val client = clientBuilder.build()

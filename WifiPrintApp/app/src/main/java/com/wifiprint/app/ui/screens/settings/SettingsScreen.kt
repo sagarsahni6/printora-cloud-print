@@ -237,7 +237,7 @@ fun SettingsScreen(
                     Spacer(Modifier.height(14.dp))
                     AboutInfoRow("App Name", "Printora")
                     AboutInfoRow("Version", "2.2.2 (Pro Max Edition)")
-                    AboutInfoRow("Security", "AES-256 E2EE & TLS")
+                    AboutInfoRow("Security", "TLS 1.2+ with certificate pinning (local) / Cloudflare tunnel (remote)")
                     Spacer(Modifier.height(8.dp))
                     Text(
                         "Print effortlessly from your Android device to any PC printer via local network or cloud relay. " +
