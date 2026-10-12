@@ -1262,10 +1262,17 @@ public partial class MainWindow : Window
 
     private void RotatePin()
     {
-        Program.Settings.CurrentConnectionPin = AppSettings.GeneratePin();
-        Program.Settings.Save();
-        UpdatePinDisplay();
-        AppendLog($"[{DateTime.Now:HH:mm:ss}] 🔄 Connection PIN refreshed: {PinDisplay.Text}");
+        try
+        {
+            Program.Settings.CurrentConnectionPin = AppSettings.GeneratePin();
+            Program.Settings.Save();
+            UpdatePinDisplay();
+            AppendLog($"[{DateTime.Now:HH:mm:ss}] 🔄 Connection PIN refreshed: {PinDisplay.Text}");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"[{DateTime.Now:HH:mm:ss}] ⚠ Failed to save refreshed PIN: {ex.Message}");
+        }
     }
 
     private void RefreshPin_Click(object sender, RoutedEventArgs e)

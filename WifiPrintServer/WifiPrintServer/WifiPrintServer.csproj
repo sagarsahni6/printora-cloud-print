@@ -28,14 +28,14 @@
     <PackageReference Include="Docnet.Core" Version="2.6.0" />
     
     <!-- JWT Authentication -->
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.13" />
     
     <!-- mDNS/Zeroconf discovery -->
     <PackageReference Include="Makaretu.Dns.Multicast" Version="0.27.0" />
     
     <!-- Entity Framework Core + SQLite for persistence -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.13">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -55,9 +55,12 @@
 
     <!-- QR Code generation for connection -->
     <PackageReference Include="QRCoder" Version="1.6.0" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
 
     <!-- DPAPI for secrets at rest (Phase 1 §6) -->
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
 
 </Project>

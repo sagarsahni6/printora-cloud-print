@@ -77,7 +77,7 @@ public class AppSettings
     /// Optional permanent public URL, DDNS, or Cloudflare Tunnel domain (e.g. https://print.yourdomain.com).
     /// If set, this fixed URL is embedded in the permanent QR code so paper-printed QR codes work forever.
     /// </summary>
-    public string? CustomPublicUrl { get; set; }
+    public string? CustomPublicUrl { get; set; } = "https://printora.calclabz.com";
 
     /// <summary>
     /// How long (in minutes) a device session lasts after pairing.
@@ -264,26 +264,40 @@ public class AppSettings
         return newSettings;
     }
 
-    /// <summary>
-    /// Persists current settings to disk.
-    /// </summary>
+    private static readonly object _saveLock = new();
+
     public void Save()
     {
-        Directory.CreateDirectory(SettingsDir);
-        NormalizeSecrets();
-
-        // Create a copy with DPAPI-protected secrets for disk storage
-        var diskCopy = JsonSerializer.Deserialize<AppSettings>(
-            JsonSerializer.Serialize(this))!;
-        diskCopy.JwtSecret = DpapiProtector.Protect(JwtSecret);
-        diskCopy.CertificatePassword = DpapiProtector.Protect(CertificatePassword);
-        diskCopy.CurrentQrPairingToken = DpapiProtector.Protect(CurrentQrPairingToken);
-
-        var json = JsonSerializer.Serialize(diskCopy, new JsonSerializerOptions
+        lock (_saveLock)
         {
-            WriteIndented = true
-        });
-        File.WriteAllText(SettingsFilePath, json);
+            Directory.CreateDirectory(SettingsDir);
+            NormalizeSecrets();
+
+            // Create a copy with DPAPI-protected secrets for disk storage
+            var diskCopy = JsonSerializer.Deserialize<AppSettings>(
+                JsonSerializer.Serialize(this))!;
+            diskCopy.JwtSecret = DpapiProtector.Protect(JwtSecret);
+            diskCopy.CertificatePassword = DpapiProtector.Protect(CertificatePassword);
+            diskCopy.CurrentQrPairingToken = DpapiProtector.Protect(CurrentQrPairingToken);
+
+            var json = JsonSerializer.Serialize(diskCopy, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            for (int attempt = 0; attempt < 5; attempt++)
+            {
+                try
+                {
+                    File.WriteAllText(SettingsFilePath, json);
+                    break;
+                }
+                catch (IOException) when (attempt < 4)
+                {
+                    Thread.Sleep(50);
+                }
+            }
+        }
     }
 
     private void NormalizeSecrets()
@@ -305,6 +319,9 @@ public class AppSettings
 
         if (string.IsNullOrWhiteSpace(HostIdentifier))
             HostIdentifier = GenerateHostIdentifier();
+
+        if (string.IsNullOrWhiteSpace(CustomPublicUrl))
+            CustomPublicUrl = "https://printora.calclabz.com";
     }
 
     public static string GenerateAlphanumericPassword(int length)

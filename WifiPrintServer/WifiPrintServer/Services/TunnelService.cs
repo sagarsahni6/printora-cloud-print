@@ -20,13 +20,15 @@ public class TunnelService : IDisposable
     private readonly object _lock = new();
 
     public const string PinnedVersion = "2024.12.2";
-    public const string PinnedSha256 = ""; // TODO: Fill real hash for pinned release; fail-closed unless --allow-unverified-cloudflared
+    public const string PinnedSha256 = "c2f4a3c3ea4c62eed562ede027d586a6044d35517e335e642f4e9783e651e4a3";
     private static readonly string DownloadUrl = $"https://github.com/cloudflare/cloudflared/releases/download/{PinnedVersion}/cloudflared-windows-amd64.exe";
 
     private static readonly string CloudflaredDir = Path.Combine(
         AppSettings.AppDataDir, "cloudflared");
 
     private static readonly string CloudflaredExePath = Path.Combine(CloudflaredDir, "cloudflared.exe");
+
+    private bool _hasNamedTunnel;
 
     /// <summary>
     /// The public tunnel URL (e.g. https://xxx.trycloudflare.com) or null if not running.
@@ -77,12 +79,14 @@ public class TunnelService : IDisposable
             // 1. Ensure cloudflared.exe exists
             if (!File.Exists(CloudflaredExePath))
             {
-                var legacyExes = new[]
+                var searchExes = new[]
                 {
+                    Path.Combine(AppContext.BaseDirectory, "cloudflared.exe"),
+                    Path.Combine(AppContext.BaseDirectory, "cloudflared", "cloudflared.exe"),
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SpoolDrop", "cloudflared", "cloudflared.exe"),
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WifiPrintServer", "cloudflared", "cloudflared.exe")
                 };
-                foreach (var legacy in legacyExes)
+                foreach (var legacy in searchExes)
                 {
                     if (File.Exists(legacy))
                     {
@@ -106,15 +110,17 @@ public class TunnelService : IDisposable
             }
 
             // 2. Start the tunnel process
+            // Only use a named tunnel if the user explicitly configured a CustomPublicUrl AND a config file exists.
+            // Otherwise, ALWAYS run Cloudflare Quick Tunnel (account-less *.trycloudflare.com) for plug-and-play cloud relay.
             var configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cloudflared", "config.yml");
-            bool hasNamedTunnel = File.Exists(configPath);
-            string customUrl = Program.Settings.CustomPublicUrl?.Trim() ?? "";
+            bool hasCustomUrl = !string.IsNullOrWhiteSpace(Program.Settings.CustomPublicUrl);
+            _hasNamedTunnel = hasCustomUrl && File.Exists(configPath);
 
-            string arguments = hasNamedTunnel
+            string arguments = _hasNamedTunnel
                 ? "tunnel run"
                 : $"tunnel --url https://localhost:{localPort} --no-tls-verify";
 
-            _logger.LogInformation("Starting Cloudflare tunnel for port {Port} (named={Named}, args={Args})...", localPort, hasNamedTunnel, arguments);
+            _logger.LogInformation("Starting Cloudflare tunnel for port {Port} (named={Named}, args={Args})...", localPort, _hasNamedTunnel, arguments);
             OnLog?.Invoke($"🔄 Connecting tunnel for port {localPort} to Cloudflare edge...");
 
             _tunnelProcess = new Process
@@ -267,14 +273,11 @@ public class TunnelService : IDisposable
                     _logger.LogInformation("🌐 Cloudflare tunnel active: {Url}", PublicUrl);
                     OnTunnelReady?.Invoke(PublicUrl);
                 }
-                else if (string.IsNullOrEmpty(PublicUrl) && line.Contains("Registered tunnel connection"))
+                else if (string.IsNullOrEmpty(PublicUrl) && line.Contains("Registered tunnel connection") && _hasNamedTunnel)
                 {
-                    var configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cloudflared", "config.yml");
-                    if (File.Exists(configPath))
+                    if (!string.IsNullOrWhiteSpace(Program.Settings.CustomPublicUrl))
                     {
-                        PublicUrl = !string.IsNullOrWhiteSpace(Program.Settings.CustomPublicUrl)
-                            ? Program.Settings.CustomPublicUrl.Trim()
-                            : "https://printora.calclabz.com";
+                        PublicUrl = Program.Settings.CustomPublicUrl.Trim();
                         IsStarting = false;
                         _logger.LogInformation("🌐 Cloudflare permanent named tunnel active: {Url}", PublicUrl);
                         OnTunnelReady?.Invoke(PublicUrl);

@@ -93,9 +93,10 @@ public class WebPrintProtectionService
             return true;
         }
 
-        // 2. Host header contains trycloudflare.com
+        // 2. Host header contains trycloudflare.com or calclabz.com
         var host = context.Request.Host.Host;
-        if (host.EndsWith("trycloudflare.com", StringComparison.OrdinalIgnoreCase))
+        if (host.EndsWith("trycloudflare.com", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith("calclabz.com", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

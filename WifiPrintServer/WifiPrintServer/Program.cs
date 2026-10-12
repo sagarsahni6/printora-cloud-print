@@ -11,6 +11,7 @@ using Serilog;
 using WifiPrintServer.Data;
 using WifiPrintServer.Hubs;
 using WifiPrintServer.Models;
+using WifiPrintServer.Security;
 using WifiPrintServer.Services;
 
 namespace WifiPrintServer;
@@ -109,18 +110,36 @@ public partial class Program
         {
             options.AddDefaultPolicy(policy =>
             {
-                var origins = new List<string>
+                policy.SetIsOriginAllowed(origin =>
                 {
-                    $"https://localhost:{Settings.ServerPort}",
-                    $"http://localhost:{Settings.ServerPort}"
-                };
-                if (!string.IsNullOrWhiteSpace(Settings.CustomPublicUrl))
-                    origins.Add(Settings.CustomPublicUrl.TrimEnd('/'));
+                    if (string.IsNullOrWhiteSpace(origin)) return false;
+                    if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                    {
+                        var host = uri.Host;
+                        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                            host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                            host.EndsWith(".trycloudflare.com", StringComparison.OrdinalIgnoreCase) ||
+                            host.EndsWith(".calclabz.com", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
 
-                policy.WithOrigins(origins.ToArray())
-                      .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials();
+                        if (!string.IsNullOrWhiteSpace(Settings.CustomPublicUrl) &&
+                            origin.TrimEnd('/').Equals(Settings.CustomPublicUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+
+                        if (System.Net.IPAddress.TryParse(host, out var ip) && NetworkUtils.IsSameLocalSubnet(ip))
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
             });
         });
 
@@ -209,7 +228,7 @@ public partial class Program
                 context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
 
             if (context.Request.Path.StartsWithSegments("/" + Settings.HostIdentifier))
-                context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'";
+                context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' ws: wss: https:;";
 
             await next();
         });
