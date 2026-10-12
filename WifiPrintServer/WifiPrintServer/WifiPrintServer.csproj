@@ -28,7 +28,7 @@
     <PackageReference Include="Docnet.Core" Version="2.6.0" />
     
     <!-- JWT Authentication -->
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.31" />
     
     <!-- mDNS/Zeroconf discovery -->
     <PackageReference Include="Makaretu.Dns.Multicast" Version="0.27.0" />
