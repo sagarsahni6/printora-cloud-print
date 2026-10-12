@@ -54,7 +54,7 @@
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
 
     <!-- QR Code generation for connection -->
-    <PackageReference Include="QRCoder" Version="1.6.0" />
+    <PackageReference Include="QRCoder" Version="1.8.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
 
     <!-- DPAPI for secrets at rest (Phase 1 §6) -->
