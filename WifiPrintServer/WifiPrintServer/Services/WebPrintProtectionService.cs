@@ -229,8 +229,10 @@ public class WebPrintProtectionService
 
     /// <summary>
     /// Validates an HMAC session token for Cloudflare tunnel clients.
+    /// On direct LAN connections, client IP binding is strictly enforced.
+    /// On tunnel/proxy connections, edge node IP rotation (Vercel, Cloudflare, mobile CGNAT) is tolerated.
     /// </summary>
-    public bool ValidateSession(string? token, string clientIp)
+    public bool ValidateSession(string? token, string clientIp, bool isTunnel = false)
     {
         if (string.IsNullOrWhiteSpace(token)) return false;
 
@@ -252,18 +254,19 @@ public class WebPrintProtectionService
             var payloadParts = payload.Split('|');
             if (payloadParts.Length < 2) return false;
 
-            // Check client IP binding
-            if (!string.Equals(payloadParts[0], clientIp, StringComparison.OrdinalIgnoreCase))
+            // Check expiry first
+            if (!long.TryParse(payloadParts[1], out var expSeconds)) return false;
+            var currentSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (currentSeconds > expSeconds) return false;
+
+            // Check client IP binding on direct non-tunnel connections
+            // Tunnel/proxy traffic routes through rotating edge nodes (Vercel, Cloudflare, cellular CGNAT)
+            if (!isTunnel && !string.Equals(payloadParts[0], clientIp, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("Session token IP mismatch: token issued for {TokenIp}, presented by {ClientIp}",
                     payloadParts[0], clientIp);
                 return false;
             }
-
-            // Check expiry
-            if (!long.TryParse(payloadParts[1], out var expSeconds)) return false;
-            var currentSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            if (currentSeconds > expSeconds) return false;
 
             return true;
         }

@@ -17,16 +17,20 @@ public static class ClientIpResolver
 
         if (peerIsLoopback)
         {
-            if (context.Request.Headers.TryGetValue("CF-Connecting-IP", out var cf) &&
-                !string.IsNullOrWhiteSpace(cf))
-                return cf.ToString().Trim();
-
             if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var xff) &&
                 !string.IsNullOrWhiteSpace(xff))
             {
                 var first = xff.ToString().Split(',')[0].Trim();
+                if (first.Contains(':') && !first.Contains('[') && first.IndexOf(':') == first.LastIndexOf(':'))
+                {
+                    first = first.Split(':')[0];
+                }
                 if (!string.IsNullOrEmpty(first)) return first;
             }
+
+            if (context.Request.Headers.TryGetValue("CF-Connecting-IP", out var cf) &&
+                !string.IsNullOrWhiteSpace(cf))
+                return cf.ToString().Trim();
         }
 
         var ip = remote?.ToString() ?? "127.0.0.1";

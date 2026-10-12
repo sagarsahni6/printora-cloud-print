@@ -623,8 +623,11 @@ public sealed class QueueAndSecurityTests : IDisposable
         // Same IP -> Valid
         Assert.True(protectionService.ValidateSession(token, originalIp));
 
-        // Different IP -> Rejected
+        // Different IP on direct connection -> Rejected
         Assert.False(protectionService.ValidateSession(token, "203.0.113.50"));
+
+        // Different IP on tunnel/cloud proxy -> Accepted
+        Assert.True(protectionService.ValidateSession(token, "203.0.113.50", isTunnel: true));
     }
 
     [Fact]

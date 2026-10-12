@@ -70,7 +70,7 @@ public class AdminController : ControllerBase
         var requiresApproval = isTunnelRequest || _settings.RequirePinForWebTunnel || _settings.RequireHostApprovalForWebPrint;
 
         var presentedToken = !string.IsNullOrWhiteSpace(headerToken) ? headerToken : token;
-        var isApproved = (!requiresApproval) || (!string.IsNullOrWhiteSpace(presentedToken) && _protectionService.ValidateSession(presentedToken, clientIp));
+        var isApproved = (!requiresApproval) || (!string.IsNullOrWhiteSpace(presentedToken) && _protectionService.ValidateSession(presentedToken, clientIp, isTunnel: isTunnelRequest));
 
         // Information disclosure defense:
         // Do not expose paired phones/internal devices or other users' jobs to external web tunnel visitors
@@ -357,7 +357,7 @@ public class AdminController : ControllerBase
                     token = headerToken.ToString();
             }
 
-            if (!_protectionService.ValidateSession(token, clientIp))
+            if (!_protectionService.ValidateSession(token, clientIp, isTunnel: isTunnelRequest))
             {
                 return StatusCode(StatusCodes.Status403Forbidden, new
                 {
@@ -3082,7 +3082,6 @@ public class AdminController : ControllerBase
 
             if (requiresApproval && !isApproved) {
                 // Not approved yet! Lock the studio and display the Host Approval Gate Card!
-                localStorage.removeItem('spool_session_token');
                 if (gateCard) gateCard.style.display = 'block';
                 if (printForm) printForm.classList.add('studio-locked');
 
