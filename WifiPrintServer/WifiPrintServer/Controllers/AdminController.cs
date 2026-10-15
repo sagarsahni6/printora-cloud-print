@@ -1008,29 +1008,18 @@ public class AdminController : ControllerBase
     public IActionResult GetServiceWorker()
     {
         var swJs = """
-            const CACHE_NAME = 'printora-web-v2';
-            const ASSETS = [
-                '/',
-                '/manifest.json'
-            ];
-
             self.addEventListener('install', (e) => {
                 self.skipWaiting();
-                e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS).catch(() => {})));
             });
 
             self.addEventListener('activate', (e) => {
-                e.waitUntil(self.clients.claim());
+                caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+                self.registration.unregister();
+                self.clients.claim();
             });
 
             self.addEventListener('fetch', (e) => {
-                // Pass dynamic API and print submissions straight to network
-                if (e.request.url.includes('/api/')) {
-                    return;
-                }
-                e.respondWith(
-                    fetch(e.request).catch(() => caches.match(e.request))
-                );
+                e.respondWith(fetch(e.request));
             });
             """;
 
@@ -2371,32 +2360,29 @@ public class AdminController : ControllerBase
             border-color: var(--primary-border);
         }
 
-        /* PWA Install Button */
-        .btn-install-pwa {
+        /* Android App Direct Download Button */
+        .btn-app-download {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            background: linear-gradient(135deg, #0067C0 0%, #0052A3 100%);
-            color: #FFFFFF;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: #FFFFFF !important;
+            text-decoration: none !important;
             border: none;
             border-radius: var(--radius-full);
             font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 103, 192, 0.3);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
-            animation: install-pulse 3s infinite;
         }
 
-        .btn-install-pwa:hover {
+        .btn-app-download:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 103, 192, 0.4);
-        }
-
-        @keyframes install-pulse {
-            0%, 100% { box-shadow: 0 2px 8px rgba(0, 103, 192, 0.3); }
-            50% { box-shadow: 0 0 16px rgba(0, 103, 192, 0.6); }
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+            color: #FFFFFF !important;
+            text-decoration: none !important;
         }
 
         /* Summary Card */
@@ -2890,12 +2876,16 @@ public class AdminController : ControllerBase
         let isWaitingApproval = false;
         let selectedPageRangeMode = 'all';
 
+        // Clear any old PWA service worker caches
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('{{swUrl}}').catch((err) => {
-                    console.log('SW registration note:', err);
-                });
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                for (let r of regs) r.unregister();
             });
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let n of names) caches.delete(n);
+                });
+            }
         }
 
         function switchTab(tabId) {
