@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.wifiprint.app.data.models.PrintJob
 import com.wifiprint.app.data.repository.PrintRepository
+import com.wifiprint.app.data.settings.AppSettings
 import com.wifiprint.app.discovery.NsdDiscoveryManager
 import com.wifiprint.app.network.NetworkMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +34,10 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     application: Application,
-    private val repository: PrintRepository
+    private val repository: PrintRepository,
+    private val networkMonitor: NetworkMonitor,
+    private val discoveryManager: NsdDiscoveryManager,
+    private val appSettings: AppSettings
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -42,7 +46,6 @@ class HomeViewModel @Inject constructor(
         private const val MAX_CONSECUTIVE_FAILURES = 3       // Require 3 consecutive failures (~75s) before disconnecting
     }
 
-    private val networkMonitor = NetworkMonitor(application)
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -154,12 +157,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private val discoveryManager = NsdDiscoveryManager(application)
-
     /**
      * Attempt to connect to the last paired server.
      */
     fun tryAutoConnect() {
+        if (!appSettings.autoConnect.value) {
+            Log.d(TAG, "Auto-connect disabled in settings")
+            return
+        }
         viewModelScope.launch {
             val savedServer = repository.getLastPairedServer()
             val hasTunnel = !savedServer?.tunnelUrl.isNullOrBlank()
@@ -288,7 +293,6 @@ class HomeViewModel @Inject constructor(
 
     override fun onCleared() {
         discoveryManager.stopDiscovery()
-        networkMonitor.stopMonitoring()
         super.onCleared()
     }
 }

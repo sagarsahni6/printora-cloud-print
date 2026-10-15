@@ -77,7 +77,9 @@ class JobHistoryViewModel @Inject constructor(
                     }
                 }
             },
-            onFailure = { /* ignore — server may be unreachable */ }
+            onFailure = { e ->
+                android.util.Log.d("JobHistoryVM", "Job sync from server failed: ${e.message}")
+            }
         )
     }
 

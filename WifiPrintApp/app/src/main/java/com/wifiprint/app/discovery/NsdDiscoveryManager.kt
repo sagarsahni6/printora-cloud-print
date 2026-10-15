@@ -6,6 +6,7 @@ import android.net.nsd.NsdServiceInfo
 import android.util.Log
 import com.wifiprint.app.data.models.ServerInfo
 import com.wifiprint.app.network.NetworkMonitor
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,8 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.SocketTimeoutException
 import java.util.ArrayDeque
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Robust dual-channel discovery manager:
@@ -21,7 +24,11 @@ import java.util.ArrayDeque
  * 2. UDP broadcast beacon receiver on port 5058 (bypasses router multicast filtering)
  * 3. Dynamic local subnet detection (Same Wi-Fi network vs. Another network)
  */
-class NsdDiscoveryManager(context: Context) {
+@Singleton
+class NsdDiscoveryManager @Inject constructor(
+    @ApplicationContext context: Context,
+    private val networkMonitor: NetworkMonitor
+) {
 
     companion object {
         private const val TAG = "NsdDiscovery"
@@ -30,7 +37,6 @@ class NsdDiscoveryManager(context: Context) {
     }
 
     private val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
-    private val networkMonitor = NetworkMonitor(context)
 
     private val _discoveredServers = MutableStateFlow<List<ServerInfo>>(emptyList())
     val discoveredServers: StateFlow<List<ServerInfo>> = _discoveredServers
@@ -44,7 +50,7 @@ class NsdDiscoveryManager(context: Context) {
     private val resolveQueue = ArrayDeque<NsdServiceInfo>()
     private var isResolving = false
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var udpJob: Job? = null
 
     private val discoveryListener = object : NsdManager.DiscoveryListener {
@@ -196,6 +202,10 @@ class NsdDiscoveryManager(context: Context) {
     fun startDiscovery() {
         if (isDiscovering) return
         try {
+            // Recreate scope if it was cancelled by a previous stopDiscovery()
+            if (!scope.isActive) {
+                scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            }
             synchronized(serverMap) {
                 serverMap.clear()
                 _discoveredServers.value = emptyList()
@@ -214,6 +224,7 @@ class NsdDiscoveryManager(context: Context) {
         try {
             udpJob?.cancel()
             udpJob = null
+            scope.coroutineContext.cancelChildren()
             nsdManager.stopServiceDiscovery(discoveryListener)
             isDiscovering = false
             _isSearching.value = false

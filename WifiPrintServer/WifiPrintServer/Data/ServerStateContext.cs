@@ -41,6 +41,8 @@ public class ServerStateContext : DbContext
         modelBuilder.Entity<DeviceInfo>(entity =>
         {
             entity.HasKey(device => device.Id);
+            entity.Property(device => device.Token).HasDefaultValue(string.Empty);
+            entity.Property(device => device.Jti).HasDefaultValue(string.Empty);
         });
 
         modelBuilder.Entity<PendingApprovalRecord>(entity =>

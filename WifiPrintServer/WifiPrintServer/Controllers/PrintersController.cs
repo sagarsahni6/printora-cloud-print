@@ -23,7 +23,9 @@ public class PrintersController : ControllerBase
 
     /// <summary>
     /// GET /api/printers — Returns all installed printers.
+    /// Accessible by any connected client (local or tunnel) so printer discovery is never blocked by auth token delays.
     /// </summary>
+    [AllowAnonymous]
     [HttpGet]
     public IActionResult GetAll()
     {
@@ -34,6 +36,7 @@ public class PrintersController : ControllerBase
     /// <summary>
     /// GET /api/printers/{id} — Returns a specific printer with capabilities.
     /// </summary>
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public IActionResult GetById(string id)
     {

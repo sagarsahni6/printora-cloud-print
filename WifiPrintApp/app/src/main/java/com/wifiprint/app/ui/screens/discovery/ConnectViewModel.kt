@@ -16,6 +16,7 @@ data class ConnectState(
     val isConnecting: Boolean = false,
     val isConnected: Boolean = false,
     val connectingTo: String = "",
+    val statusMessage: String = "Connecting...",
     val error: String? = null,
     val serverName: String = "",
     val requiresPinPrompt: Boolean = false,
@@ -31,19 +32,29 @@ class ConnectViewModel @Inject constructor(
     private val _state = MutableStateFlow(ConnectState())
     val state: StateFlow<ConnectState> = _state
 
+    private var connectJob: kotlinx.coroutines.Job? = null
+
+    fun cancelConnection() {
+        connectJob?.cancel()
+        connectJob = null
+        _state.update { it.copy(isConnecting = false, error = "Connection cancelled by user") }
+    }
+
     /**
      * Connects to a server using the Device Approval flow.
      * If on the same local network, auto-connects immediately.
      * If on another network, passes QR token and/or PIN to establish trust.
      */
     fun connectToServer(server: ServerInfo, qrToken: String? = null, pin: String? = null) {
+        connectJob?.cancel()
         _state.update { it.copy(
             isConnecting = true,
             connectingTo = server.id,
+            statusMessage = "Waiting for approval from PC...",
             error = null
         ) }
 
-        viewModelScope.launch {
+        connectJob = viewModelScope.launch {
             val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
 
             val result = repository.requestConnectionApproval(

@@ -2,9 +2,11 @@ package com.wifiprint.app.ui.screens.print
 
 import android.content.Context
 import android.net.Uri
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wifiprint.app.data.intent.IncomingIntentManager
 import com.wifiprint.app.data.models.PrintSettings
 import com.wifiprint.app.data.models.PrinterInfo
 import com.wifiprint.app.data.models.SelectedFile
@@ -12,8 +14,10 @@ import com.wifiprint.app.data.repository.PrintRepository
 import com.wifiprint.app.workers.PrintUploadWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -57,24 +61,82 @@ data class PrintUiState(
 @HiltViewModel
 class PrintViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
-    private val repository: PrintRepository
+    private val repository: PrintRepository,
+    private val incomingIntentManager: IncomingIntentManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PrintUiState())
     val state: StateFlow<PrintUiState> = _state
     private val workManager by lazy { WorkManager.getInstance(appContext) }
 
-    init { loadPrinters() }
+    init {
+        observePrinters()
+        observeConnection()
+        observeIncomingFiles()
+        loadPrinters()
+    }
 
-    fun loadPrinters() {
+    private fun observePrinters() {
+        viewModelScope.launch {
+            repository.printers.collect { printers ->
+                if (printers.isNotEmpty()) {
+                    _state.update {
+                        it.copy(
+                            printers = printers,
+                            selectedPrinter = it.selectedPrinter?.takeIf { sel -> printers.any { p -> p.id == sel.id } }
+                                ?: printers.firstOrNull { p -> p.isDefault }
+                                ?: printers.firstOrNull(),
+                            isLoadingPrinters = false
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun observeConnection() {
+        viewModelScope.launch {
+            repository.connectionStatus.collect { status ->
+                if (status.isConnected && _state.value.printers.isEmpty()) {
+                    loadPrinters(forceRefresh = true)
+                }
+            }
+        }
+    }
+
+    private fun observeIncomingFiles() {
+        viewModelScope.launch {
+            incomingIntentManager.incomingFiles.collect { files ->
+                if (!files.isNullOrEmpty()) {
+                    val consumed = incomingIntentManager.consumeIncomingFiles() ?: return@collect
+                    if (consumed.size == 1) {
+                        setFile(consumed[0].uri, consumed[0].name)
+                    } else {
+                        clearFiles()
+                        val selectedFiles = consumed.map { file ->
+                            SelectedFile(
+                                uri = file.uri,
+                                name = file.name,
+                                mimeType = detectFileType(file.uri, file.name)
+                            )
+                        }
+                        addFiles(selectedFiles)
+                    }
+                }
+            }
+        }
+    }
+
+    fun loadPrinters(forceRefresh: Boolean = false) {
         _state.update { it.copy(isLoadingPrinters = true) }
         viewModelScope.launch {
-            repository.getPrinters().fold(
+            repository.getPrinters(forceRefresh = forceRefresh).fold(
                 onSuccess = { printers ->
                     _state.update {
                         it.copy(
                             printers = printers,
-                            selectedPrinter = printers.firstOrNull { p -> p.isDefault }
+                            selectedPrinter = it.selectedPrinter?.takeIf { sel -> printers.any { p -> p.id == sel.id } }
+                                ?: printers.firstOrNull { p -> p.isDefault }
                                 ?: printers.firstOrNull(),
                             isLoadingPrinters = false
                         )
@@ -224,28 +286,28 @@ class PrintViewModel @Inject constructor(
             return
         }
 
-        // Try reading page count locally via Android PdfRenderer (0 bandwidth, instant)
-        val (localCount, isLocked) = checkPdfStatus(uri)
-        if (isLocked) {
-            _state.update {
-                it.copy(
-                    isPdfLocked = true,
-                    isLoadingPageCount = false,
-                    showPasswordDialog = true,
-                    totalPages = localCount
-                )
-            }
-            return
-        }
-
-        if (localCount != null) {
-            _state.update { it.copy(totalPages = localCount, isPdfLocked = false, isLoadingPageCount = false) }
-            return
-        }
-
-        // Fallback to server endpoint if local extraction is not possible
         _state.update { it.copy(isLoadingPageCount = true) }
         viewModelScope.launch {
+            // Run PdfRenderer / PdfSecurityHelper I/O on a background thread to avoid ANR
+            val (localCount, isLocked) = withContext(Dispatchers.IO) { checkPdfStatus(uri) }
+            if (isLocked) {
+                _state.update {
+                    it.copy(
+                        isPdfLocked = true,
+                        isLoadingPageCount = false,
+                        showPasswordDialog = true,
+                        totalPages = localCount
+                    )
+                }
+                return@launch
+            }
+
+            if (localCount != null) {
+                _state.update { it.copy(totalPages = localCount, isPdfLocked = false, isLoadingPageCount = false) }
+                return@launch
+            }
+
+            // Fallback to server endpoint if local extraction is not possible
             repository.getPageCount(uri, name).fold(
                 onSuccess = { response ->
                     _state.update {
@@ -404,22 +466,49 @@ class PrintViewModel @Inject constructor(
                 printerName = printer.name
             )
             workManager.enqueue(request)
-            _state.update {
-                it.copy(
-                    isUploading = false,
-                    success = true,
-                    error = null,
-                    // Clear file selection so preview is removed after printing
-                    selectedFileUri = null,
-                    selectedFileName = "",
-                    fileType = "Unknown",
-                    totalPages = null,
-                    pageRangeMode = "All",
-                    isPdfLocked = false,
-                    pdfPassword = null,
-                    isPasswordVerified = false,
-                    settings = it.settings.copy(pdfPassword = null)
-                )
+
+            viewModelScope.launch {
+                workManager.getWorkInfoByIdFlow(request.id).collect { workInfo ->
+                    if (workInfo == null) return@collect
+                    when (workInfo.state) {
+                        WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> {
+                            _state.update { it.copy(isUploading = true, uploadProgress = 0.05f) }
+                        }
+                        WorkInfo.State.RUNNING -> {
+                            val progress = workInfo.progress.getInt(PrintUploadWorker.KEY_PROGRESS, 10)
+                            _state.update { it.copy(isUploading = true, uploadProgress = progress / 100f) }
+                        }
+                        WorkInfo.State.SUCCEEDED -> {
+                            val jobId = workInfo.outputData.getString(PrintUploadWorker.KEY_JOB_ID)
+                            _state.update {
+                                it.copy(
+                                    isUploading = false,
+                                    uploadProgress = 1f,
+                                    success = true,
+                                    jobId = jobId,
+                                    error = null,
+                                    selectedFileUri = null,
+                                    selectedFileName = "",
+                                    fileType = "Unknown",
+                                    totalPages = null,
+                                    pageRangeMode = "All",
+                                    isPdfLocked = false,
+                                    pdfPassword = null,
+                                    isPasswordVerified = false,
+                                    settings = it.settings.copy(pdfPassword = null)
+                                )
+                            }
+                        }
+                        WorkInfo.State.FAILED -> {
+                            val errorMsg = workInfo.outputData.getString(PrintUploadWorker.KEY_ERROR)
+                                ?: "Print job upload failed"
+                            _state.update { it.copy(isUploading = false, uploadProgress = 0f, error = errorMsg) }
+                        }
+                        WorkInfo.State.CANCELLED -> {
+                            _state.update { it.copy(isUploading = false, uploadProgress = 0f, error = "Print job cancelled") }
+                        }
+                    }
+                }
             }
         } catch (e: Exception) {
             _state.update { it.copy(isUploading = false, error = e.message ?: "Failed to schedule upload") }

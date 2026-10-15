@@ -144,7 +144,7 @@ fun PrintScreen(
 
     LaunchedEffect(isConnected) {
         if (isConnected) {
-            viewModel.loadPrinters()
+            viewModel.loadPrinters(forceRefresh = true)
         }
     }
 
@@ -676,26 +676,71 @@ fun PrintScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 0.5.sp
                     )
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Green400.copy(alpha = 0.12f)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        if (isConnected) {
+                            IconButton(
+                                onClick = { viewModel.loadPrinters(forceRefresh = true) },
+                                modifier = Modifier.size(26.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Refresh,
+                                    contentDescription = "Refresh Printers",
+                                    tint = Primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isConnected) Green400.copy(alpha = 0.12f) else Orange500.copy(alpha = 0.12f)
                         ) {
-                            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Green400))
-                            Spacer(Modifier.width(5.dp))
-                            Text("Online", style = MaterialTheme.typography.labelSmall, color = Green400, fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(if (isConnected) Green400 else Orange500))
+                                Spacer(Modifier.width(5.dp))
+                                Text(if (isConnected) "Online" else "Offline", style = MaterialTheme.typography.labelSmall, color = if (isConnected) Green400 else Orange500, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
                 Spacer(Modifier.height(10.dp))
 
                 if (state.isLoadingPrinters) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Text("Querying host printers...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 } else if (state.printers.isEmpty()) {
-                    Text("No printers found on network", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { viewModel.loadPrinters(forceRefresh = true) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            if (isConnected) "No printers detected on host PC" else "Connect to host PC to view printers",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            "Tap to reload",
+                            color = Primary,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 } else {
                     var expanded by remember { mutableStateOf(false) }
                     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {

@@ -25,6 +25,7 @@ fun PrinterListScreen(
 ) {
     val printers by viewModel.printers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     // Health dashboard bottom sheet
     var selectedPrinterForHealth by remember { mutableStateOf<PrinterInfo?>(null) }
@@ -61,6 +62,26 @@ fun PrinterListScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
+        } else if (error != null) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Filled.ErrorOutline, null, Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(12.dp))
+                    Text("Failed to load printers",
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold)
+                    Text(error!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = { viewModel.loadPrinters() }) {
+                        Icon(Icons.Filled.Refresh, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Retry")
+                    }
+                }
+            }
         } else if (printers.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -71,6 +92,12 @@ fun PrinterListScreen(
                     Text("Make sure you're connected to a server",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedButton(onClick = { viewModel.loadPrinters() }) {
+                        Icon(Icons.Filled.Refresh, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Refresh")
+                    }
                 }
             }
         } else {

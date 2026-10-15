@@ -24,15 +24,14 @@
 -keep interface kotlin.coroutines.Continuation { *; }
 -dontwarn kotlin.Unit
 
-# OkHttp
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
+# OkHttp (consumer rules included in okhttp3 AAR)
 -dontwarn okhttp3.**
+-dontwarn okio.**
 
-# Gson
--keep class sun.misc.Unsafe { *; }
--keep class com.google.gson.** { *; }
--keep interface com.google.gson.** { *; }
+# Gson (consumer rules included in gson AAR; preserve SerializedName fields)
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 -dontwarn com.google.gson.**
 
 # Models & Data classes (prevent field renaming/removal)

@@ -15,22 +15,26 @@ class PrinterViewModel @Inject constructor(
     private val repository: PrintRepository
 ) : ViewModel() {
 
-    private val _printers = MutableStateFlow<List<PrinterInfo>>(emptyList())
-    val printers: StateFlow<List<PrinterInfo>> = _printers
+    val printers: StateFlow<List<PrinterInfo>> = repository.printers
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    init { loadPrinters() }
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
-    fun loadPrinters() {
+    init { loadPrinters(force = false) }
+
+    fun loadPrinters(force: Boolean = true) {
         _isLoading.value = true
+        _error.value = null
         viewModelScope.launch {
-            repository.getPrinters().fold(
-                onSuccess = { _printers.value = it },
-                onFailure = { }
+            repository.getPrinters(forceRefresh = force).fold(
+                onSuccess = { /* Automatically updates repository.printers StateFlow */ },
+                onFailure = { e -> _error.value = e.message ?: "Failed to load printers" }
             )
             _isLoading.value = false
         }
     }
 }
+

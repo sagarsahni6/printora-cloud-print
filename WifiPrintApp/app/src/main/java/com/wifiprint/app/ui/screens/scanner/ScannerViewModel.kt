@@ -1418,11 +1418,10 @@ class ScannerViewModel @Inject constructor(
 
         val options = BitmapFactory.Options().apply {
             inPreferredConfig = Bitmap.Config.RGB_565
-            inDither = true
         }
         val optimized = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size, options) ?: scaled
 
-        if (scaled != source && scaled != optimized) {
+        if (scaled != source && scaled != optimized && !scaled.isRecycled) {
             scaled.recycle()
         }
 
@@ -1431,8 +1430,11 @@ class ScannerViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        _state.value.scannedPages.forEach { it.bitmap.recycle(); it.originalBitmap.recycle() }
-        _state.value.idCardFrontBitmap?.recycle()
-        _state.value.idCardBackBitmap?.recycle()
+        _state.value.scannedPages.forEach {
+            if (!it.originalBitmap.isRecycled) it.originalBitmap.recycle()
+            if (it.bitmap != it.originalBitmap && !it.bitmap.isRecycled) it.bitmap.recycle()
+        }
+        _state.value.idCardFrontBitmap?.let { if (!it.isRecycled) it.recycle() }
+        _state.value.idCardBackBitmap?.let { if (!it.isRecycled) it.recycle() }
     }
 }

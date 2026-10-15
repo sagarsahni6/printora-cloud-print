@@ -40,6 +40,38 @@ public class PrinterService
                 return _cachedPrinters;
         }
 
+        // System.Printing (LocalPrintServer / GetPrintQueues) is COM-based and requires
+        // an STA thread. ASP.NET Core's Kestrel runs on MTA thread-pool threads, which
+        // causes the enumeration to silently return empty results or throw.
+        // Marshal the call onto a dedicated STA thread to match the WPF behavior.
+        var printers = new List<PrinterInfo>();
+        if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
+        {
+            printers = EnumeratePrintersCore();
+        }
+        else
+        {
+            var staThread = new Thread(() => { printers = EnumeratePrintersCore(); });
+            staThread.SetApartmentState(ApartmentState.STA);
+            staThread.IsBackground = true;
+            staThread.Start();
+            staThread.Join(TimeSpan.FromSeconds(10));
+        }
+
+        lock (_cacheLock)
+        {
+            _cachedPrinters = printers;
+            _cacheExpiry = DateTime.UtcNow.Add(CacheTtl);
+        }
+
+        return printers;
+    }
+
+    /// <summary>
+    /// Performs the actual printer enumeration. Must be called from an STA thread.
+    /// </summary>
+    private List<PrinterInfo> EnumeratePrintersCore()
+    {
         var printers = new List<PrinterInfo>();
         try
         {
@@ -82,14 +114,58 @@ public class PrinterService
                 finally { queue.Dispose(); }
             }
         }
-        catch (Exception ex) { _logger.LogError(ex, "Failed to enumerate printers"); }
+        catch (Exception ex) { _logger.LogError(ex, "Failed to enumerate printers via LocalPrintServer"); }
 
-        lock (_cacheLock)
+        // Fallback: If LocalPrintServer returned 0 printers (e.g. print spooler permissions / RPC limits),
+        // query Windows GDI InstalledPrinters so we NEVER return an empty list when printers exist.
+        if (printers.Count == 0)
         {
-            _cachedPrinters = printers;
-            _cacheExpiry = DateTime.UtcNow.Add(CacheTtl);
+            try
+            {
+                string osPrinterName = string.Empty;
+                try { osPrinterName = new PrinterSettings().PrinterName; } catch { }
+
+                foreach (string printerName in PrinterSettings.InstalledPrinters)
+                {
+                    try
+                    {
+                        var settings = new PrinterSettings { PrinterName = printerName };
+                        bool isDefault = !string.IsNullOrEmpty(_settings.DefaultPrinter)
+                            ? printerName == _settings.DefaultPrinter
+                            : printerName == osPrinterName || settings.IsDefaultPrinter;
+
+                        printers.Add(new PrinterInfo
+                        {
+                            Id = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(printerName)).Replace("=", ""),
+                            Name = printerName,
+                            DriverName = "Windows Print Driver",
+                            PortName = "Standard Port",
+                            IsDefault = isDefault,
+                            IsOnline = settings.IsValid,
+                            SupportsColor = settings.SupportsColor,
+                            SupportsDuplex = settings.CanDuplex,
+                            SupportedPaperSizes = settings.PaperSizes.Cast<PaperSize>().Select(p => p.PaperName).Distinct().ToList(),
+                            SupportedQualities = new List<string> { "Draft", "Normal", "High" },
+                            Status = settings.IsValid ? PrinterStatus.Ready : PrinterStatus.Offline
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to inspect fallback printer: {Name}", printerName);
+                    }
+                }
+                if (printers.Count > 0)
+                {
+                    _logger.LogInformation("Recovered {Count} printers via PrinterSettings.InstalledPrinters fallback", printers.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Fallback PrinterSettings.InstalledPrinters enumeration failed");
+            }
         }
 
+        _logger.LogInformation("Enumerated {Count} printers (STA thread)", printers.Count);
         return printers;
     }
 

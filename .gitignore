@@ -86,8 +86,19 @@ WifiPrintServer/publish_out/
 publish/
 release-package/
 *.zip
+release-staging/
+**/release-output/
 graphify-out/
 .agents/
+.gemini/
+.agent/
+.gsd/
+GSD-STYLE.md
+PROJECT_RULES.md
+VERSION
+adapters/
+model_capabilities.yaml
+scripts/
 
 # Website
 website/node_modules/

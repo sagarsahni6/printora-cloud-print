@@ -7,14 +7,18 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.wifi.WifiManager
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Monitors WiFi network state and provides real-time connectivity info.
  * Detects WiFi connect/disconnect events so the app can update connection status.
  */
-class NetworkMonitor(private val context: Context) {
+@Singleton
+class NetworkMonitor @Inject constructor(@ApplicationContext private val context: Context) {
 
     companion object {
         private const val TAG = "NetworkMonitor"
@@ -121,7 +125,33 @@ class NetworkMonitor(private val context: Context) {
      * Prefers active Wi-Fi IPv4 address first, then falls back to non-loopback interfaces.
      */
     fun getLocalIpAddress(): String? {
-        // 1. Prefer Wi-Fi IPv4 address when Wi-Fi is connected
+        // 1. Modern Android: query ConnectivityManager active network LinkProperties
+        try {
+            val activeNetwork = connectivityManager.activeNetwork
+            val linkProps = connectivityManager.getLinkProperties(activeNetwork)
+            val ip = linkProps?.linkAddresses?.firstOrNull {
+                it.address is java.net.Inet4Address && !it.address.isLoopbackAddress
+            }?.address?.hostAddress
+            if (!ip.isNullOrBlank()) return ip
+        } catch (_: Exception) {}
+
+        // 2. Iterate network interfaces, prioritizing WLAN / Wi-Fi interfaces over cellular (rmnet)
+        try {
+            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()?.toList() ?: emptyList()
+            val wifiIfaces = interfaces.filter { it.name.startsWith("wlan", ignoreCase = true) || it.name.contains("wifi", ignoreCase = true) }
+            val otherIfaces = interfaces.filterNot { it.name.startsWith("wlan", ignoreCase = true) || it.name.contains("wifi", ignoreCase = true) }
+
+            for (iface in (wifiIfaces + otherIfaces)) {
+                if (iface.isLoopback || !iface.isUp) continue
+                for (addr in iface.inetAddresses.toList()) {
+                    if (addr is java.net.Inet4Address && !addr.isLoopbackAddress) {
+                        return addr.hostAddress
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        // 3. Fallback to WifiManager connectionInfo
         @Suppress("DEPRECATION")
         try {
             val ipInt = wifiManager.connectionInfo?.ipAddress ?: 0
@@ -136,22 +166,6 @@ class NetworkMonitor(private val context: Context) {
             }
         } catch (_: Exception) {}
 
-        // 2. Fall back to active non-loopback IPv4 network interfaces
-        try {
-            val interfaces = java.net.NetworkInterface.getNetworkInterfaces() ?: return null
-            while (interfaces.hasMoreElements()) {
-                val iface = interfaces.nextElement()
-                if (iface.isLoopback || !iface.isUp) continue
-                val addresses = iface.inetAddresses
-                while (addresses.hasMoreElements()) {
-                    val addr = addresses.nextElement()
-                    if (addr is java.net.Inet4Address && !addr.isLoopbackAddress) {
-                        return addr.hostAddress
-                    }
-                }
-            }
-        } catch (_: Exception) {}
-
         return null
     }
 
@@ -159,9 +173,17 @@ class NetworkMonitor(private val context: Context) {
      * Checks if a target server IP address is on the same local network subnet as this Android device.
      */
     fun isSameLocalSubnet(serverIp: String): Boolean {
-        if (serverIp == "localhost" || serverIp == "127.0.0.1") return true
+        if (serverIp.isBlank() || serverIp == "localhost" || serverIp == "127.0.0.1") return true
 
-        val localIp = getLocalIpAddress() ?: return false
+        val isPrivateIp = serverIp.startsWith("192.168.") || serverIp.startsWith("10.") || serverIp.startsWith("172.")
+        val onWifi = checkWifiConnected()
+
+        val localIp = getLocalIpAddress()
+        if (localIp == null) {
+            // If device is confirmed on Wi-Fi and the server is a LAN private IP, assume same network
+            return onWifi && isPrivateIp
+        }
+
         val localParts = localIp.split('.')
         val serverParts = serverIp.split('.')
         if (localParts.size == 4 && serverParts.size == 4) {
@@ -174,6 +196,9 @@ class NetworkMonitor(private val context: Context) {
             // For 10.x.x.x or 172.16.x.x networks, check matching prefix
             if (localParts[0] == "10" && serverParts[0] == "10") return true
             if (localParts[0] == "172" && serverParts[0] == "172" && localParts[1] == serverParts[1]) return true
+
+            // If local IP detected was mobile (e.g. 10.x), but phone is actively on Wi-Fi and server is 192.168.x.x:
+            if (onWifi && isPrivateIp) return true
         }
 
         return false

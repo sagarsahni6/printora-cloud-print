@@ -179,10 +179,10 @@ public class ServerStateStore
     {
         Id = device.Id,
         Name = device.Name,
-        Model = device.Model,
+        Model = device.Model ?? "Unknown",
         IpAddress = device.IpAddress,
-        Token = device.Token,
-        Jti = device.Jti,
+        Token = device.Token ?? string.Empty,
+        Jti = device.Jti ?? string.Empty,
         PairedAt = device.PairedAt,
         LastSeenAt = device.LastSeenAt,
         IsActive = device.IsActive,

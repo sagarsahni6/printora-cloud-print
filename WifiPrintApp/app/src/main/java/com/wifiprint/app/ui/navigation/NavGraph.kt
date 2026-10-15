@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -12,6 +13,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.wifiprint.app.BuildConfig
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -163,7 +165,9 @@ fun MainNavigation() {
             DocumentPreviewScreen(
                 fileUriString = Uri.decode(fileUri),
                 onBack = { navController.popBackStack() },
-                onPrintFromPage = {}
+                onPrintFromPage = {
+                    navController.popBackStack(Routes.MAIN, false)
+                }
             )
         }
     }
@@ -189,6 +193,11 @@ private fun MainTabScreen(
 ) {
     val pagerState = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
+
+    BackHandler(enabled = pagerState.currentPage != 0) {
+        scope.launch { pagerState.animateScrollToPage(0) }
+    }
+
     val homeState by homeViewModel.uiState.collectAsState()
     val connectState by connectViewModel.state.collectAsState()
     val discoveredServers by discoveryViewModel.discoveredServers.collectAsState()
@@ -272,7 +281,7 @@ private fun MainTabScreen(
                                         color = Primary.copy(alpha = 0.14f)
                                     ) {
                                         Text(
-                                            "v2.2",
+                                            "v${BuildConfig.VERSION_NAME}",
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.ExtraBold,
@@ -453,7 +462,7 @@ private fun MainTabScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            beyondBoundsPageCount = 1
+            beyondBoundsPageCount = 0
         ) { page ->
             when (page) {
                 0 -> PrintScreen(

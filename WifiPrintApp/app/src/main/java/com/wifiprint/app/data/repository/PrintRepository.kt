@@ -23,6 +23,7 @@ import com.wifiprint.app.data.models.ServerPrintJob
 import com.wifiprint.app.data.security.SecureTokenStorage
 import com.wifiprint.app.network.CertificatePinning
 import com.wifiprint.app.network.NetworkMonitor
+import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +31,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -64,9 +67,15 @@ class PrintRepository @Inject constructor(
     private val printJobDao: PrintJobDao,
     private val serverDao: ServerDao,
     private val okHttpClient: OkHttpClient,
-    private val secureTokenStorage: SecureTokenStorage
+    private val secureTokenStorage: SecureTokenStorage,
+    private val networkMonitor: NetworkMonitor
 ) {
+    companion object {
+        private const val TAG = "PrintRepository"
+    }
+
     private val gson = Gson()
+    private val fallbackMutex = Mutex()
 
     private var currentBaseUrl: String = ""
     private var currentToken: String? = null
@@ -76,6 +85,9 @@ class PrintRepository @Inject constructor(
 
     private val _connectionStatus = MutableStateFlow(ServerConnectionStatus())
     val connectionStatus: StateFlow<ServerConnectionStatus> = _connectionStatus.asStateFlow()
+
+    private val _printers = MutableStateFlow<List<PrinterInfo>>(emptyList())
+    val printers: StateFlow<List<PrinterInfo>> = _printers.asStateFlow()
 
     /**
      * Determines whether the given URL is a Cloudflare Quick Tunnel or remote domain.
@@ -95,21 +107,25 @@ class PrintRepository @Inject constructor(
             if (it.endsWith("/")) it else "$it/"
         }
         val hasLocalIp = !server.ipAddress.isNullOrBlank()
-        val isSameSubnet = hasLocalIp && NetworkMonitor(context).isSameLocalSubnet(server.ipAddress)
+        val isWifi = networkMonitor.checkWifiConnected()
+        val isSameSubnet = hasLocalIp && (networkMonitor.isSameLocalSubnet(server.ipAddress) || isWifi)
 
-        // Prioritize local IP ONLY if actually on the same local subnet.
-        // If not on same subnet and tunnel is available, use tunnel!
+        // Prioritize local IP whenever on local Wi-Fi or same subnet
         currentBaseUrl = when {
-            isSameSubnet && hasLocalIp -> "https://${server.ipAddress}:${server.port}/"
+            hasLocalIp && (isSameSubnet || isWifi) -> "https://${server.ipAddress}:${server.port}/"
             isTunnel -> normalizedTunnel!!
             hasLocalIp -> "https://${server.ipAddress}:${server.port}/"
             else -> "https://localhost:${server.port}/"
         }
 
-        // Load token securely from SecureTokenStorage, or migrate from legacy entity token
-        val token = secureTokenStorage.getToken(server.id) ?: server.token?.also { legacyToken ->
-            secureTokenStorage.saveToken(server.id, legacyToken)
-        }
+        // Load token securely from SecureTokenStorage, checking all possible server ID formats
+        val token = secureTokenStorage.getToken(server.id)
+            ?: secureTokenStorage.getToken(currentBaseUrl)
+            ?: (if (!server.tunnelUrl.isNullOrBlank()) secureTokenStorage.getToken(server.tunnelUrl) else null)
+            ?: (if (hasLocalIp) secureTokenStorage.getToken("${server.ipAddress}:${server.port}") else null)
+            ?: server.token?.also { legacyToken ->
+                secureTokenStorage.saveToken(server.id, legacyToken)
+            }
         currentToken = token
         observedServerFingerprint = null
         val useTunnelTls = isTunnelUrl(currentBaseUrl)
@@ -164,7 +180,7 @@ class PrintRepository @Inject constructor(
     ): Result<AuthResponse> {
         val hasTunnel = !tunnelUrl.isNullOrBlank()
         val normalizedTunnel = tunnelUrl?.trim()?.let { if (it.endsWith("/")) it else "$it/" }
-        val isSameNet = serverIp.isNotBlank() && NetworkMonitor(context).isSameLocalSubnet(serverIp)
+        val isSameNet = serverIp.isNotBlank() && networkMonitor.isSameLocalSubnet(serverIp)
 
         // Fast LAN probe: if local IP is provided, test if the port is reachable with 1.0s timeout
         val isLocalReachable = if (serverIp.isNotBlank() && port > 0) {
@@ -229,6 +245,13 @@ class PrintRepository @Inject constructor(
 
                     val serverId = if (isTunnelTarget) (tunnelUrl ?: "$serverIp:$port") else "$serverIp:$port"
                     secureTokenStorage.saveToken(serverId, authData.token)
+                    if (!tunnelUrl.isNullOrBlank()) {
+                        secureTokenStorage.saveToken(tunnelUrl.trim().let { if (it.endsWith("/")) it else "$it/" }, authData.token)
+                    }
+                    if (serverIp.isNotBlank()) {
+                        secureTokenStorage.saveToken("$serverIp:$port", authData.token)
+                        secureTokenStorage.saveToken("https://$serverIp:$port/", authData.token)
+                    }
 
                     val server = ServerInfo(
                         id = serverId,
@@ -289,6 +312,7 @@ class PrintRepository @Inject constructor(
 
                 val serverId = "$serverIp:$port"
                 secureTokenStorage.saveToken(serverId, authData.token)
+                secureTokenStorage.saveToken("https://$serverIp:$port/", authData.token)
 
                 val server = ServerInfo(
                     id = serverId,
@@ -316,12 +340,17 @@ class PrintRepository @Inject constructor(
 
     // —— Printers ————————————————————————————————————————————————
 
-    /** Fetch all printers from the connected server. */
-    suspend fun getPrinters(): Result<List<PrinterInfo>> {
+    /** Fetch all printers from the connected server, caching results in printers StateFlow. */
+    suspend fun getPrinters(forceRefresh: Boolean = false): Result<List<PrinterInfo>> {
+        if (!forceRefresh && _printers.value.isNotEmpty()) {
+            return Result.success(_printers.value)
+        }
         return runApiCall("Failed to get printers") { api ->
             val response = api.getPrinters()
             if (response.isSuccessful && response.body()?.data != null) {
-                Result.success(response.body()!!.data!!)
+                val list = response.body()!!.data!!
+                _printers.value = list
+                Result.success(list)
             } else {
                 Result.failure(apiFailure(response, "Failed to get printers"))
             }
@@ -645,35 +674,45 @@ class PrintRepository @Inject constructor(
                 } else null
 
                 if (fallbackUrl != null && fallbackUrl != currentBaseUrl) {
-                    try {
-                        currentBaseUrl = fallbackUrl
-                        val useTunnelTls = isTunnelUrl(currentBaseUrl)
-                        currentApiService = createApiService(
-                            baseUrl = currentBaseUrl,
-                            token = currentToken ?: secureTokenStorage.getToken(server.id) ?: server.token,
-                            pinnedFingerprint = if (useTunnelTls) null else server.certificateFingerprint,
-                            allowTrustOnFirstUse = useTunnelTls || server.certificateFingerprint.isNullOrBlank()
-                        ) { fingerprint ->
-                            observedServerFingerprint = fingerprint
-                        }
-                        val retryResult = block(currentApiService!!)
-                        if (retryResult.isSuccess) {
-                            persistObservedFingerprint()
-                            updateCurrentServerHealth("Healthy")
-                            val s = currentServer ?: server
-                            _connectionStatus.update {
-                                it.copy(
-                                    isConnected = true,
-                                    serverName = s?.name ?: "Connected",
-                                    serverUrl = currentBaseUrl,
-                                    isTunnel = isTunnelUrl(currentBaseUrl),
-                                    health = "Healthy"
-                                )
+                    val fallbackResult = fallbackMutex.withLock {
+                        if (currentBaseUrl == fallbackUrl && currentApiService != null) {
+                            runCatching { block(currentApiService!!) }.getOrNull()
+                        } else {
+                            try {
+                                currentBaseUrl = fallbackUrl
+                                val useTunnelTls = isTunnelUrl(currentBaseUrl)
+                                currentApiService = createApiService(
+                                    baseUrl = currentBaseUrl,
+                                    token = currentToken ?: secureTokenStorage.getToken(server.id),
+                                    pinnedFingerprint = if (useTunnelTls) null else server.certificateFingerprint,
+                                    allowTrustOnFirstUse = useTunnelTls || server.certificateFingerprint.isNullOrBlank()
+                                ) { fingerprint ->
+                                    observedServerFingerprint = fingerprint
+                                }
+                                val retryResult = block(currentApiService!!)
+                                if (retryResult.isSuccess) {
+                                    persistObservedFingerprint()
+                                    updateCurrentServerHealth("Healthy")
+                                    val s = currentServer ?: server
+                                    _connectionStatus.update {
+                                        it.copy(
+                                            isConnected = true,
+                                            serverName = s?.name ?: "Connected",
+                                            serverUrl = currentBaseUrl,
+                                            isTunnel = isTunnelUrl(currentBaseUrl),
+                                            health = "Healthy"
+                                        )
+                                    }
+                                    retryResult
+                                } else null
+                            } catch (fallbackEx: Exception) {
+                                Log.w(TAG, "Fallback call to $fallbackUrl failed: ${fallbackEx.message}")
+                                null
                             }
-                            return retryResult
                         }
-                    } catch (_: Exception) {
-                        // Fallback also failed, report original exception
+                    }
+                    if (fallbackResult != null && fallbackResult.isSuccess) {
+                        return fallbackResult
                     }
                 }
             }
@@ -715,7 +754,13 @@ class PrintRepository @Inject constructor(
             clientBuilder.sslSocketFactory(tlsBundle.sslSocketFactory, tlsBundle.trustManager)
             clientBuilder.hostnameVerifier { hostname, _ ->
                 val targetHost = runCatching { java.net.URI(baseUrl).host }.getOrNull()
-                hostname.equals(targetHost, ignoreCase = true) || hostname == "localhost" || hostname == "127.0.0.1"
+                if (targetHost.isNullOrBlank()) return@hostnameVerifier false
+                val isTargetLoopback = targetHost == "localhost" || targetHost == "127.0.0.1" || targetHost == "::1"
+                if (isTargetLoopback) {
+                    hostname.equals(targetHost, ignoreCase = true) || hostname == "localhost" || hostname == "127.0.0.1"
+                } else {
+                    hostname.equals(targetHost, ignoreCase = true)
+                }
             }
         }
 

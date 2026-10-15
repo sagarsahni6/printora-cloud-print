@@ -27,21 +27,23 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.wifiprint.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val currentThemeMode by ThemeManager.themeMode
 
-    var notifications by remember { mutableStateOf(true) }
-    var autoConnect by remember { mutableStateOf(true) }
-    var highQualityPreview by remember { mutableStateOf(true) }
-    var autoCleanScans by remember { mutableStateOf(false) }
+    val notifications by viewModel.notifications.collectAsState()
+    val autoConnect by viewModel.autoConnect.collectAsState()
+    val highQualityPreview by viewModel.highQualityPreview.collectAsState()
+    val autoCleanScans by viewModel.autoCleanScans.collectAsState()
 
     Column(
         modifier = Modifier
@@ -156,7 +158,7 @@ fun SettingsScreen(
                     checked = autoConnect,
                     onCheckedChange = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        autoConnect = it
+                        viewModel.setAutoConnect(it)
                     },
                     iconTint = Tertiary
                 )
@@ -171,7 +173,7 @@ fun SettingsScreen(
                     checked = notifications,
                     onCheckedChange = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        notifications = it
+                        viewModel.setNotifications(it)
                     },
                     iconTint = Orange400
                 )
@@ -186,7 +188,7 @@ fun SettingsScreen(
                     checked = highQualityPreview,
                     onCheckedChange = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        highQualityPreview = it
+                        viewModel.setHighQualityPreview(it)
                     },
                     iconTint = Cyan400
                 )
@@ -201,7 +203,7 @@ fun SettingsScreen(
                     checked = autoCleanScans,
                     onCheckedChange = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        autoCleanScans = it
+                        viewModel.setAutoCleanScans(it)
                     },
                     iconTint = Red400
                 )

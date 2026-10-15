@@ -11,10 +11,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DiscoveryViewModel @Inject constructor(
-    application: Application
+    application: Application,
+    private val discoveryManager: NsdDiscoveryManager
 ) : AndroidViewModel(application) {
-
-    private val discoveryManager = NsdDiscoveryManager(application)
 
     val discoveredServers: StateFlow<List<ServerInfo>> = discoveryManager.discoveredServers
     val isSearching: StateFlow<Boolean> = discoveryManager.isSearching
