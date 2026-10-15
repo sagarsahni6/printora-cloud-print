@@ -393,6 +393,14 @@ public class AdminController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest(new { success = false, message = "Please select or drop a document to print." });
 
+        var fileExt = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var fileMime = file.ContentType?.ToLowerInvariant() ?? "";
+        if (fileMime.StartsWith("video/") || fileMime.StartsWith("audio/") ||
+            fileExt is ".mp4" or ".mkv" or ".avi" or ".mov" or ".wmv" or ".flv" or ".webm" or ".3gp" or ".m4v" or ".mp3" or ".wav")
+        {
+            return BadRequest(new { success = false, message = "Video and audio files are not supported. Only documents (PDF, Word DOCX, Plain Text) and images are allowed." });
+        }
+
         var printSettings = new PrintSettings();
         if (!string.IsNullOrEmpty(settingsJson))
         {
@@ -1283,6 +1291,34 @@ public class AdminController : ControllerBase
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
+        }
+
+        .btn-app-download {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 36px;
+            padding: 0 12px;
+            border-radius: var(--radius-md);
+            background: #10B981;
+            color: #FFFFFF;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn-app-download:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-app-download:active {
+            transform: scale(0.96);
         }
 
         .btn-header-icon {
@@ -2424,10 +2460,10 @@ public class AdminController : ControllerBase
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn-install-pwa" id="btnInstallPwa" style="display:none;" onclick="installPwaApp()" title="Install Printora App">
-                <span class="material-symbols-outlined">install_mobile</span>
-                <span>Install App</span>
-            </button>
+            <a href="https://printora.calclabz.com/api/download/android" class="btn-app-download" title="Download Printora Android App" target="_blank" rel="noopener noreferrer">
+                <span class="material-symbols-outlined" style="font-size:16px;">android</span>
+                <span>Get Android App</span>
+            </a>
             <button class="btn-header-icon" title="Refresh Data" onclick="fetchDashboardData(true)">
                 <span class="material-symbols-outlined" id="refreshIcon">refresh</span>
             </button>
@@ -2501,13 +2537,13 @@ public class AdminController : ControllerBase
                         <div class="m-drop-icon">
                             <span class="material-symbols-outlined">cloud_upload</span>
                         </div>
-                        <div class="m-drop-title">Tap to choose or <span>drop file</span></div>
-                        <div class="m-drop-sub">PDF, Word DOCX, PNG, JPG, WebP, Plain Text</div>
+                        <div class="m-drop-title">Tap to choose or <span>drop document</span></div>
+                        <div class="m-drop-sub">PDF, Word DOCX, Plain Text, PNG, JPG, WebP</div>
                         <div class="m-chip-row">
                             <span class="m-chip">PDF</span>
                             <span class="m-chip">DOCX</span>
+                            <span class="m-chip">TEXT</span>
                             <span class="m-chip">IMAGE</span>
-                            <span class="m-chip">TXT</span>
                         </div>
                         <div class="m-quota-badge">
                             <span class="material-symbols-outlined">shield</span>
@@ -2515,7 +2551,7 @@ public class AdminController : ControllerBase
                         </div>
                     </div>
 
-                    <input type="file" id="mobileFileInput" style="display:none;" accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp,.bmp" onchange="handleFileSelect(this.files)">
+                    <input type="file" id="mobileFileInput" style="display:none;" accept=".pdf,.doc,.docx,.txt,.text,.jpg,.jpeg,.png,.webp,.bmp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/jpeg,image/png,image/webp,image/bmp" onchange="handleFileSelect(this.files)">
                     <input type="text" name="hp_website" id="hp_website" class="hp-field" tabindex="-1" autocomplete="off">
 
                     <!-- Staged File Card -->
@@ -2853,35 +2889,6 @@ public class AdminController : ControllerBase
         let requiresApproval = false;
         let isWaitingApproval = false;
         let selectedPageRangeMode = 'all';
-        let deferredPrompt = null;
-
-        // PWA Installation & Service Worker
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const btn = document.getElementById('btnInstallPwa');
-            if (btn) btn.style.display = 'inline-flex';
-        });
-
-        window.addEventListener('appinstalled', () => {
-            deferredPrompt = null;
-            const btn = document.getElementById('btnInstallPwa');
-            if (btn) btn.style.display = 'none';
-            showToast('✓ Printora App installed on home screen!', 'check_circle');
-        });
-
-        async function installPwaApp() {
-            if (!deferredPrompt) {
-                showToast('To install: tap your browser menu (⋮) and select "Add to Home screen"', 'info');
-                return;
-            }
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                showToast('Installing Printora App...', 'download');
-            }
-            deferredPrompt = null;
-        }
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -3033,9 +3040,33 @@ public class AdminController : ControllerBase
             }
         });
 
+        const ALLOWED_EXTENSIONS = ['PDF', 'DOCX', 'DOC', 'TXT', 'TEXT', 'JPG', 'JPEG', 'PNG', 'WEBP', 'BMP'];
+
         function handleFileSelect(files) {
             if (!files || files.length === 0) return;
             const file = files[0];
+
+            // Validate that video or audio files are strictly rejected
+            const mime = (file.type || '').toLowerCase();
+            const ext = (file.name.split('.').pop() || '').toUpperCase();
+
+            const isVideo = mime.startsWith('video/') ||
+                ['MP4', 'MKV', 'AVI', 'MOV', 'WMV', 'FLV', 'WEBM', '3GP', 'M4V', 'TS', 'MPEG', 'MPG'].includes(ext);
+            const isAudio = mime.startsWith('audio/') ||
+                ['MP3', 'WAV', 'M4A', 'FLAC', 'AAC', 'OGG', 'WMA'].includes(ext);
+
+            if (isVideo || isAudio) {
+                showToast('Video and audio files cannot be printed. Please select a document (PDF, Word, TXT, or Image).', 'error');
+                clearStagedFile();
+                return;
+            }
+
+            if (!ALLOWED_EXTENSIONS.includes(ext)) {
+                showToast(`Unsupported format (.${ext.toLowerCase()}). Only PDF, Word DOCX, Plain Text, and Images are allowed.`, 'error');
+                clearStagedFile();
+                return;
+            }
+
             stagedFile = file;
 
             document.getElementById('mobileDropzone').style.display = 'none';
@@ -3045,7 +3076,6 @@ public class AdminController : ControllerBase
             document.getElementById('stagedFileName').textContent = file.name;
             document.getElementById('stagedFileSize').textContent = formatBytes(file.size);
 
-            const ext = file.name.split('.').pop().toUpperCase();
             document.getElementById('formatBadge').textContent = ext.substring(0, 4);
 
             if (ext === 'PDF') {
@@ -3379,7 +3409,13 @@ public class AdminController : ControllerBase
         // Job Submission
         async function submitPrintJob() {
             if (!stagedFile) {
-                showToast('Please select a file to print first', 'warning');
+                showToast('Please select a document to print first', 'warning');
+                return;
+            }
+
+            const submitExt = (stagedFile.name.split('.').pop() || '').toUpperCase();
+            if ((stagedFile.type && (stagedFile.type.startsWith('video/') || stagedFile.type.startsWith('audio/'))) || !ALLOWED_EXTENSIONS.includes(submitExt)) {
+                showToast('Video and media files cannot be printed. Please select a document (PDF, Word, TXT, or Image).', 'error');
                 return;
             }
 
