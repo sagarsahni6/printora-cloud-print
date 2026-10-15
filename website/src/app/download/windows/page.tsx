@@ -77,24 +77,14 @@ export default function DownloadWindowsPage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <a
-              href={siteConfig.directWindowsExeUrl}
-              download="PrintoraServer-Setup.exe"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download Installer (.exe)</span>
-            </a>
-            <a
-              href={siteConfig.directWindowsZipUrl}
-              download="PrintoraServer-Windows-v2.2.2.zip"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium text-xs transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Portable (.zip)</span>
-            </a>
-          </div>
+          <a
+            href={siteConfig.directWindowsExeUrl}
+            download="PrintoraServer-Setup.exe"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download Installer (.exe)</span>
+          </a>
         </div>
 
         {/* System Requirements & Verification Details */}
