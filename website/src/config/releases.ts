@@ -29,8 +29,8 @@ export const releasesConfig: ReleaseInfo = {
     installer: {
       fileName: "PrintoraServer-Setup.exe",
       url: `${GITHUB_REPO}/releases/latest/download/PrintoraServer-Setup.exe`,
-      sha256: "f3b669e603be74400115b7957fa00635264f87486e99716fee4eda771b1b4d34",
-      sizeBytes: 96924519,
+      sha256: "3f2332e231557ad7fe0e80a2e1c4d1eef71d4494cecfe56a66f436970f65f1e2",
+      sizeBytes: 96925720,
     },
     portableZip: {
       fileName: "PrintoraServer-Windows-v2.2.2.zip",
