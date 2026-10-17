@@ -129,7 +129,7 @@ dependencies {
     ksp("androidx.hilt:hilt-compiler:1.2.0")
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
 
 
     // Image loading
