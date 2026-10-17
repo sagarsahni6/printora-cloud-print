@@ -51,7 +51,7 @@
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
 
     <!-- Windows printing -->
-    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.12" />
 
     <!-- QR Code generation for connection -->
     <PackageReference Include="QRCoder" Version="1.6.0" />
