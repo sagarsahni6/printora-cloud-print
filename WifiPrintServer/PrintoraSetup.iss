@@ -2,7 +2,7 @@
 ; Inno Setup 6 Script
 
 #define MyAppName "Printora Server"
-#define MyAppVersion "2.2.2"
+#define MyAppVersion "2.2.3"
 #define MyAppPublisher "Printora"
 #define MyAppURL "https://printora.calclabz.com"
 #define MyAppExeName "PrintoraServer.exe"

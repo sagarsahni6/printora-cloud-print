@@ -737,10 +737,19 @@ public partial class MainWindow : Window
             var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
             if (enable)
-                key?.SetValue("WifiPrintServer",
-                    $"\"{Path.Combine(System.AppContext.BaseDirectory, "WifiPrintServer.exe")}\"");
-            else
+            {
+                var exePath = Environment.ProcessPath
+                    ?? (File.Exists(Path.Combine(System.AppContext.BaseDirectory, "PrintoraServer.exe"))
+                        ? Path.Combine(System.AppContext.BaseDirectory, "PrintoraServer.exe")
+                        : Path.Combine(System.AppContext.BaseDirectory, "WifiPrintServer.exe"));
+                key?.SetValue("PrintoraServer", $"\"{exePath}\"");
                 key?.DeleteValue("WifiPrintServer", false);
+            }
+            else
+            {
+                key?.DeleteValue("PrintoraServer", false);
+                key?.DeleteValue("WifiPrintServer", false);
+            }
         }
         catch (Exception ex) { AppendLog($"Auto-start error: {ex.Message}"); }
     }

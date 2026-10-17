@@ -5,9 +5,9 @@ namespace WifiPrintServer;
 
 public partial class App : Application
 {
-    private static readonly string InstallDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Programs", "PrintoraServer");
+    private static readonly string InstallDir = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Printora Server"))
+        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Printora Server")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "PrintoraServer");
 
     private static readonly string InstalledExePath = Path.Combine(InstallDir, "PrintoraServer.exe");
 
