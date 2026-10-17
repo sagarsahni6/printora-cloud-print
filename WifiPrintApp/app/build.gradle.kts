@@ -148,7 +148,7 @@ dependencies {
     implementation("androidx.camera:camera-view:1.3.1")
 
     // ML Kit Document Scanner (Adobe Scan-like live edge detection)
-    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
 
     // ML Kit Barcode Scanning — unbundled via Google Play Services (drops 19.4MB native libbarhopper_v3.so)
     implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1")
