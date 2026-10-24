@@ -1,4 +1,4 @@
-import Image from "next/image";
+import PrintoraWorkflow from "@/components/PrintoraWorkflow";
 import { Download, Smartphone, Layers } from "lucide-react";
 import Link from "next/link";
 import { constructMetadata } from "@/lib/metadata";
@@ -40,29 +40,8 @@ export default function HowItWorksPage() {
       </div>
 
       {/* Live Animated Workflow Diagram */}
-      <div className="my-10 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-2 sm:p-4 shadow-xl shadow-slate-900/5 overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 mb-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#0a7746] dark:text-emerald-400">
-              Interactive Data Path • Phone to PC Spooler
-            </span>
-          </div>
-          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-            Encrypted TLS Transit • Zero Cloud Retention
-          </span>
-        </div>
-        <div className="w-full overflow-hidden rounded-2xl bg-[#fbfcf9] dark:bg-slate-950">
-          <Image
-            src="/print-workflow.svg"
-            alt="Printora Live Workflow: Phone to Encrypted Network to Windows PC to Printer"
-            width={1200}
-            height={560}
-            className="w-full h-auto block select-none"
-            priority
-            unoptimized
-          />
-        </div>
+      <div className="my-10 rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-900/5 bg-[#F4F7FB] dark:bg-[#0B1220]">
+        <PrintoraWorkflow theme="auto" motion="always" className="w-full h-auto block" />
       </div>
 
       <div className="space-y-16">

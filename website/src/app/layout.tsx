@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     canonical: "./",
   },
   title: {
-    default: "Printora – Print From Phone to Any Windows Printer",
+    default: "Print From Phone to Windows Printer | Printora",
     template: "%s | Printora",
   },
   description: siteConfig.description,
@@ -50,13 +50,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: "Printora – Print From Phone to Any Windows Printer",
+    title: "Print From Phone to Windows Printer | Printora",
     description: siteConfig.description,
     siteName: "Printora",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Printora – Print From Phone to Any Windows Printer",
+    title: "Print From Phone to Windows Printer | Printora",
     description: siteConfig.description,
   },
   robots: {

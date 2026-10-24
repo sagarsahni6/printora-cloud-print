@@ -55,28 +55,28 @@ export function Navbar() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-7 lg:gap-9" aria-label="Main Navigation">
           <Link
+            href="/#features"
+            className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+          >
+            Features
+          </Link>
+          <Link
             href="/how-it-works"
             className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
           >
             How it works
           </Link>
           <Link
-            href="/privacy"
+            href="/compatibility"
             className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
           >
-            Privacy
+            Compatibility
           </Link>
           <Link
-            href="/qr-code-web-printing"
+            href="/security"
             className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
           >
-            Web Print
-          </Link>
-          <Link
-            href="/compare"
-            className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-          >
-            Compare
+            Security
           </Link>
           <Link
             href="/faq"
@@ -121,6 +121,13 @@ export function Navbar() {
         <div className="md:hidden relative z-50 mt-2 mx-auto max-w-7xl rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4 space-y-3 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="grid gap-1 py-1">
             <Link
+              href="/#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-base font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900"
+            >
+              Features
+            </Link>
+            <Link
               href="/how-it-works"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 rounded-lg text-base font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900"
@@ -128,25 +135,18 @@ export function Navbar() {
               How it works
             </Link>
             <Link
-              href="/privacy"
+              href="/compatibility"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 rounded-lg text-base font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900"
             >
-              Privacy
+              Compatibility
             </Link>
             <Link
-              href="/qr-code-web-printing"
+              href="/security"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 rounded-lg text-base font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900"
             >
-              Web Print
-            </Link>
-            <Link
-              href="/compare"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-lg text-base font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900"
-            >
-              Compare
+              Security
             </Link>
             <Link
               href="/faq"

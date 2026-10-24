@@ -202,10 +202,10 @@ export function ModernBentoGrid() {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Zero-Cloud Privacy Vault
+                Privacy-First Architecture
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                Your medical files, contracts, and banking sheets never pass through a cloud server.
+                Local Wi-Fi printing keeps documents on your network. Remote printing routes through Cloudflare Tunnel infrastructure.
               </p>
 
               {/* Privacy Architecture Flow Indicator */}
@@ -222,22 +222,22 @@ export function ModernBentoGrid() {
                   <Trash2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <div className="text-xs">
                     <span className="font-bold text-slate-900 dark:text-white">Automatic Cleanup:</span>{" "}
-                    <span className="text-slate-500">Temporary spool files deleted immediately on job completion.</span>
+                    <span className="text-slate-500">When enabled, temporary files deleted after job completion.</span>
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <div className="text-xs">
-                    <span className="font-bold text-slate-900 dark:text-white">Zero Cloud Telemetry:</span>{" "}
-                    <span className="text-slate-500">No account required, no file analytics logged.</span>
+                    <span className="font-bold text-slate-900 dark:text-white">No Account Required:</span>{" "}
+                    <span className="text-slate-500">No sign-up, no login, no user database.</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
-              ✓ Local data sovereignty with zero external cloud accounts
+              ✓ Local-first with no permanent cloud document storage
             </div>
           </div>
 
@@ -343,13 +343,13 @@ export function ModernBentoGrid() {
                           <span className="text-[10px] text-slate-500 font-mono">({item.type})</span>
                         </div>
                         <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Fully Compatible
+                          <CheckCircle2 className="w-3 h-3" /> Compatible via Windows Driver
                         </span>
                       </div>
                     ))
                   ) : (
                     <div className="p-4 text-center text-xs text-slate-500">
-                      No specific model matched, but if Windows prints to it, Printora prints to it!
+                      No specific model matched. If your printer has a working Windows driver, it can receive print jobs through Printora.
                     </div>
                   )}
                 </div>
@@ -358,7 +358,7 @@ export function ModernBentoGrid() {
 
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
               <span>Supports USB, Wi-Fi, Ethernet, Bluetooth & Network Shares</span>
-              <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold">Rule: If Windows can print, Printora can print.</span>
+              <span className="font-mono text-emerald-700 dark:text-emerald-400 font-semibold">Works with standard Windows printer drivers.</span>
             </div>
           </div>
 

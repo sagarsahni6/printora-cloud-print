@@ -33,7 +33,7 @@ const WINDOWS_FAQS = [
   },
   {
     q: "Are printed documents or camera scans stored permanently on the PC?",
-    a: "Never. Printora follows a strict local-first, zero-retention architecture. Incoming PDF and image payloads are placed into an ephemeral working cache solely for driver translation and Windows spooler injection. Immediately after the print spooler accepts the job, temporary files are permanently purged.",
+    a: "Printora does not store documents permanently. When automatic cleanup is active (enabled by default), incoming temporary files and intermediate conversion artifacts on the host PC are deleted once the Windows print spooler reports the job complete. You can configure this setting in the host application.",
   },
 ];
 
@@ -149,7 +149,7 @@ export default function DownloadWindowsPage() {
               <strong>Download the Installer:</strong> Click the <em>&quot;Download Installer (.exe)&quot;</em> button above to directly retrieve <code>PrintoraServer-Setup.exe</code>.
             </li>
             <li>
-              <strong>Windows SmartScreen Notice:</strong> If Microsoft Defender SmartScreen displays a warning for newly released binaries, click <em>&quot;More info&quot;</em> followed by <em>&quot;Run anyway&quot;</em>.
+              <strong>Package Verification &amp; SmartScreen:</strong> If Microsoft Defender SmartScreen displays an unrecognized app notice on newly released binaries, you can verify the installer integrity against our published SHA-256 checksums before proceeding. To launch after verifying, click <em>&quot;More info&quot;</em> and select <em>&quot;Run anyway&quot;</em>.
             </li>
             <li>
               <strong>Grant Local Network Permissions:</strong> When prompted by Windows Defender Firewall, check <em>&quot;Private networks&quot;</em> and click <em>&quot;Allow access&quot;</em>. This allows your mobile devices to discover the host over local Wi-Fi.

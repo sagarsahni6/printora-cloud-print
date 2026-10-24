@@ -148,7 +148,7 @@ export default function DownloadAndroidPage() {
               <strong>Download the APK:</strong> Tap the <em>&quot;Download APK Package&quot;</em> button above on your Android phone to directly download <code>Printora-Android.apk</code>.
             </li>
             <li>
-              <strong>Allow Installation:</strong> If prompted by Android or Chrome with &quot;File might be harmful&quot;, select <em>&quot;Download anyway&quot;</em>. When opening the file, enable <em>&quot;Allow from this source&quot;</em> in your device settings.
+              <strong>Package Verification &amp; Installation:</strong> Android and Chrome display a standard security prompt for packages downloaded outside the Google Play Store. Verify the APK against our published SHA-256 checksums if you wish to confirm file integrity, then enable <em>&quot;Install unknown apps&quot;</em> for your browser in system settings to proceed.
             </li>
             <li>
               <strong>Launch &amp; Connect:</strong> Open Printora. Ensure your phone is connected to the same Wi-Fi network as your Windows PC. The app will auto-discover your Windows print server within 2 to 3 seconds.

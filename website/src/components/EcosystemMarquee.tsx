@@ -6,8 +6,8 @@ const TICKER_ITEMS = [
   "No account needed",
   "TLS 1.2+ transit",
   "Certificate pinning",
-  "No tracking or telemetry",
-  "Zero cloud storage",
+  "Local-first architecture",
+  "Auto-cleanup when enabled",
   "Free to use",
 ] as const;
 

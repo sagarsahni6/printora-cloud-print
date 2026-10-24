@@ -49,6 +49,6 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What happens to uploaded print files after printing?",
-    a: "When automatic cleanup is enabled, uploaded temporary print files and intermediate converted files are automatically deleted from the host PC once the print job successfully completes.",
+    a: "Automatic cleanup is enabled by default. When active, uploaded temporary print files and intermediate converted files are deleted from the host PC after the print job completes. This setting can be configured in the Printora host application.",
   },
 ];

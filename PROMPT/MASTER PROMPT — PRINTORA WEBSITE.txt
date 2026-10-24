@@ -1,0 +1,634 @@
+# MASTER PROMPT — PRINTORA WEBSITE AUDIT, REDESIGN & IMPLEMENTATION
+
+## Role
+
+Act as a senior product designer, frontend architect, UX/CRO specialist, technical SEO engineer, accessibility specialist, and security-conscious technical writer.
+
+Your task is to audit, redesign, implement, and validate the existing Printora marketing website.
+
+
+Build a polished, trustworthy, responsive, production-ready website that explains Printora clearly, increases successful downloads and first-print completion, improves SEO, and accurately communicates technical and privacy capabilities.
+
+This is an implementation task, not a brainstorming exercise. Inspect the existing project, modify the actual files, run available tests, verify your changes, and resolve problems you discover.
+
+Do not stop after producing a plan or mockup.
+
+---
+
+## 1. First, inspect the existing project
+
+Before changing anything:
+
+1. Inspect the entire repository structure, package manager, framework, routes, components, styling system, assets, fonts, deployment configuration, metadata, and available tests.
+2. Identify the current homepage, all major product and documentation pages, download destinations, privacy policy, security documentation, compatibility documentation, FAQs, and footer navigation.
+3. Examine the live website and compare its current content with the actual implementation.
+4. Locate existing source code, assets, product screenshots, animations, SVG illustrations, release information, and internal links that can be reused.
+5. Inspect the relevant Printora application source code or documentation if available to verify technical statements about document handling, local printing, remote printing, device pairing, supported operating systems, temporary-file cleanup, telemetry, and licensing.
+6. Record existing working functionality before editing so it is not accidentally removed.
+
+Create a concise internal implementation checklist and proceed directly into implementation.
+
+### Non-negotiable technical constraints
+
+- Keep the current framework, package manager, architecture, and deployment workflow unless a specific problem justifies a change.
+- If this is a Next.js project, retain its existing Next.js structure and routing conventions.
+- Do not introduce Tailwind CSS. Use the existing styling solution, CSS modules, regular CSS, or the project's established component styling system.
+- Do not migrate the website to a different framework.
+- Do not replace working functionality with static mockups.
+- Do not introduce unnecessary dependencies, backend services, databases, or external APIs.
+- Preserve the existing domain, routes, download URLs, product functionality, and working integrations.
+- Use TypeScript if it is already established in the project.
+- Follow existing code conventions, naming patterns, and accessibility practices.
+- Build maintainable, reusable components instead of putting the entire website into a single oversized component.
+
+If the repository does not contain enough evidence to verify a technical claim, do not invent an answer. Record the uncertainty and use conservative, accurate wording.
+
+---
+
+## 2. Product positioning and design direction
+
+Printora allows supported mobile devices and browsers to send documents to printers available through a Windows PC running the Printora host software. Local Wi-Fi printing and optional remote printing are important parts of the product story.
+
+The main audience includes ordinary users, students, home users, small businesses, offices, and people who own printers that do not provide a convenient direct mobile-printing workflow.
+
+The central value proposition is:
+
+**Print from your phone using the printer you already own.**
+
+Communicate this benefit immediately. Explain the Windows PC requirement, supported printing methods, and available mobile workflows before users download anything.
+
+### Design principles
+
+Create a premium, modern, minimalist, technology-focused interface.
+
+The visual direction should feel trustworthy and engineered rather than like a generic SaaS template.
+
+Use:
+
+- A disciplined color palette with a strong primary action color.
+- High-contrast typography and clear information hierarchy.
+- Generous spacing and consistent page grids.
+- Well-designed cards, diagrams, badges, and interface demonstrations.
+- Real Printora screenshots and product assets wherever available.
+- Responsive layouts designed for phones first, then tablets and desktops.
+- Subtle, purposeful animations that clarify the product workflow.
+- Consistent button styles, borders, radii, shadows, and focus states.
+- Reusable design tokens implemented in the existing styling system.
+
+Avoid excessive gradients, random decorative elements, generic stock photography, unnecessary glassmorphism, excessive rounded cards, oversized empty sections, and distracting animations.
+
+Do not imitate a competitor's exact website or create a generic AI-generated landing page.
+
+The finished product should look intentionally designed for Printora.
+
+---
+
+## 3. Redesign the homepage
+
+Implement the homepage using the following information architecture. Integrate or reorganize existing sections when appropriate instead of blindly duplicating content.
+
+### Section A — Header and navigation
+
+Create a clean, responsive header containing:
+
+- Printora logo and brand name.
+- Features.
+- How it works.
+- Compatibility.
+- Security and privacy.
+- Resources or support.
+- Primary download CTA.
+
+Use a compact, accessible mobile navigation.
+
+Ensure the active states, dropdowns, mobile menu, and navigation links work correctly. If a sticky header is appropriate, prevent it from consuming excessive mobile viewport space.
+
+Reuse the existing logo. Do not invent a new brand identity unless necessary.
+
+### Section B — Hero
+
+Use this proposed messaging as the starting point:
+
+**Eyebrow:** Simple printing. Your own printer.
+
+**H1:** Print from your phone using the printer you already own.
+
+**Supporting copy:**
+
+Send PDFs and photos from supported Android devices, iPhone, iPad, and compatible browsers to a printer connected to your Windows PC. Print over local Wi-Fi or configure optional remote access when you need it.
+
+**Primary CTA:** Download Windows App
+
+**Secondary CTA:** Get Android App
+
+**Text link:** Print from iPhone or browser
+
+**Supporting trust points:**
+
+- Works with printers available through supported Windows printer drivers.
+- Local Wi-Fi printing.
+- Optional remote printing.
+- Privacy-conscious document handling.
+
+Display the requirement clearly:
+
+"A Windows PC running Printora is required to receive print jobs. Your PC must be running and accessible when you print."
+
+Only show download buttons for verified, functional destinations. On mobile, prioritize the Android download where appropriate and provide an obvious browser-based workflow for Apple devices.
+
+Do not promise that every printer, operating system, or printer feature is supported.
+
+### Section C — Real product demonstration
+
+Create a compact, attractive demonstration immediately after the hero.
+
+Prefer a genuine product video or screenshot sequence over a large, static decorative illustration.
+
+Show the following flow:
+
+1. Select a document on a phone.
+2. Connect to the Windows host or paired browser session.
+3. Choose the available printer and supported print settings.
+4. Send the print job.
+5. Show the job completing and the physical page printing.
+
+Use actual product UI assets from the repository wherever possible.
+
+If video assets are unavailable, build a visually clear demonstration with genuine screenshots, CSS, and SVG. Keep it lightweight.
+
+Any interactive demonstration must function as advertised. Never present simulated success states as real product behavior.
+
+Respect reduced-motion settings, avoid unnecessary autoplay, and provide suitable video controls or a static fallback.
+
+### Section D — How it works
+
+Build an easy-to-understand three-step section:
+
+**1. Set up your Windows PC**
+
+Install and configure the Printora host application.
+
+**2. Connect your device**
+
+Use the supported mobile app, browser pairing, QR workflow, or other verified method.
+
+**3. Print your document**
+
+Select a document and available print settings, then submit your job.
+
+Add a clear visual illustration for each step. Keep technical terms out of the main explanation, while providing links to detailed guides.
+
+### Section E — Benefits
+
+Explain the main product benefits with original, consistent SVG illustrations or authentic screenshots:
+
+- Print documents and photos.
+- Use supported Windows printer drivers.
+- Print over local Wi-Fi.
+- Scan documents and use OCR where supported.
+- Create ID-card scans where supported.
+- Manage or monitor print jobs using available functionality.
+- Use optional remote printing.
+
+Do not display a feature if it is not implemented, not supported by the current release, or not verified.
+
+Make each card informative and link to a relevant detailed page if one exists.
+
+Do not invent performance benchmarks, user statistics, customer logos, testimonials, awards, or security certifications.
+
+### Section F — Compatibility
+
+Clearly explain which device and printer combinations work.
+
+Provide a prominent link to the detailed compatibility page and, if practical, a searchable or filterable compatibility table based on verified data.
+
+Distinguish among:
+
+- Minimum supported operating-system versions.
+- Currently tested operating-system versions.
+- Supported browser requirements.
+- Printers available through Windows drivers.
+- Features whose availability depends on printer hardware or drivers.
+
+Do not claim universal compatibility simply because Windows recognizes a printer.
+
+Reconcile all contradictory OS-version statements across the website.
+
+Maintain a single authoritative compatibility source or data structure where practical.
+
+### Section G — Privacy and security
+
+Make privacy a visible selling point, but never exaggerate what the product guarantees.
+
+Explain in plain English:
+
+- How local Wi-Fi printing works.
+- How optional remote printing works.
+- What role the Windows PC plays.
+- Whether documents pass through external infrastructure during remote printing.
+- What information Printora stores or transmits.
+- What happens to temporary files.
+- Whether Windows spooler files or printer memory can retain data.
+- How device pairing, connection security, and certificate verification work where applicable.
+
+Link to the full privacy policy and security documentation.
+
+Use a simple diagram to distinguish local printing from remote printing. An ordinary user should understand the difference without needing to know networking terminology.
+
+### Section H — Download and setup
+
+Create a clear download section for verified platforms.
+
+For each available release, show the actual supported operating system, release version, installation requirements, and link to the setup guide.
+
+Where the required information exists, show the release date, changelog, publisher information, and SHA-256 checksum.
+
+Explain .NET Desktop Runtime or other prerequisites when genuinely required.
+
+Do not invent release numbers, package signatures, publisher identity, or checksums.
+
+Do not instruct users to routinely bypass Windows SmartScreen or Android security warnings. Review the existing instructions and replace unsafe blanket recommendations with guidance that helps users verify the software and troubleshoot legitimate warnings.
+
+Keep existing working download URLs unless they are demonstrably incorrect.
+
+### Section I — FAQ
+
+Create an accessible FAQ component that answers the questions most likely to prevent a successful installation:
+
+- Does Printora work with my existing printer?
+- Is a Windows PC required?
+- Can I print from Android?
+- Can I print from an iPhone or iPad?
+- Can I print without installing an iPhone app?
+- Does local Wi-Fi printing require internet access?
+- How does remote printing work?
+- Does the Windows PC need to remain on?
+- Are documents uploaded to cloud storage?
+- Where are temporary files stored?
+- How do I troubleshoot connection failures?
+- How do I uninstall Printora?
+
+Answer only from verified documentation or code.
+
+Use semantic buttons and proper ARIA attributes for interactive accordions. Make the answers keyboard accessible.
+
+### Section J — Final CTA and footer
+
+Finish with a strong, straightforward CTA focused on beginning the setup.
+
+The footer should provide clearly grouped links for:
+
+- Product and features.
+- Downloads and installation.
+- Documentation and troubleshooting.
+- Compatibility.
+- Privacy and security.
+- License and source repository.
+- Contact and support.
+- Applicable legal documents.
+
+Ensure every internal link is valid and every external link has the correct destination.
+
+Avoid overwhelming the user with an unnecessarily long list of links.
+
+---
+
+## 4. Fix website-wide trust and consistency issues
+
+Audit and correct all affected pages, not just the homepage.
+
+Specifically inspect and reconcile the following topics.
+
+### Privacy and document deletion
+
+The previous website audit identified differences between the homepage's "Leave no trace" messaging, the privacy policy's conditional cleanup language, and the security page's staged-file cleanup description.
+
+Inspect the actual implementation before editing these statements.
+
+Determine, where code or documentation permits:
+
+- Whether cleanup is enabled by default.
+- Whether cleanup can be disabled.
+- Which directories contain temporary files.
+- Which event triggers deletion.
+- How failures, interrupted jobs, and application crashes are handled.
+- What is known about Windows spooler and physical printer retention.
+
+Use precise, defensible descriptions everywhere.
+
+Never state that every trace of a document is eliminated unless the complete behavior genuinely supports that claim.
+
+### Local and remote networking
+
+Inspect the local Wi-Fi workflow and optional Cloudflare Tunnel implementation.
+
+Explain that local printing and remote printing have different network paths.
+
+Describe the role of external infrastructure accurately and avoid unsupported statements such as "documents never leave your network" if remote printing can traverse third-party infrastructure.
+
+Do not claim end-to-end encryption, a zero-knowledge architecture, zero cloud involvement, or absence of server-side processing without technical verification.
+
+### Telemetry
+
+Inspect the application and website implementation before making "no telemetry" or "no tracking" claims.
+
+Clearly distinguish device status and printer information required to operate the software from analytics, advertising, diagnostics, and unrelated data collection.
+
+Do not add tracking scripts or analytics that contradict existing public privacy promises.
+
+### Compatibility
+
+Resolve inconsistent minimum OS versions and tested OS versions.
+
+Ensure that the homepage, compatibility table, download page, FAQs, and documentation agree.
+
+### License and source availability
+
+Inspect the repository's actual license.
+
+Use "open-source" only if the software's license supports that description. Otherwise, use accurate source-availability wording.
+
+### Performance and security claims
+
+Verify any numerical speed claims, file limits, security guarantees, and benchmark results before publishing them.
+
+Remove unsupported claims or explain how they were measured.
+
+Do not invent compliance certifications, independent audits, customers, testimonials, or penetration-test results.
+
+---
+
+## 5. Technical SEO and GEO implementation
+
+Implement practical technical SEO improvements without keyword stuffing or creating thin pages.
+
+### Metadata
+
+Create unique, relevant metadata for the homepage and each important existing page.
+
+Suggested homepage title:
+
+"Print From Phone to Windows Printer | Printora"
+
+Suggested homepage description:
+
+"Print PDFs and photos from Android, iPhone, or browser to a printer connected to your Windows PC. Local Wi-Fi printing with optional remote access."
+
+Use the wording only where it accurately reflects the supported product.
+
+Implement or correct:
+
+- Page titles and meta descriptions.
+- Canonical URLs.
+- Open Graph and social-sharing metadata.
+- Appropriate robots directives.
+- XML sitemap.
+- robots.txt.
+- Descriptive image alt text.
+- Semantic heading hierarchy.
+- Descriptive internal link text.
+- Appropriate favicon and application icons.
+- Correct redirects and trailing-slash conventions.
+- Valid production URLs and domain references.
+
+Preserve valuable existing URLs. Avoid unnecessary route changes. If a route must change, implement a suitable permanent redirect.
+
+Do not accidentally noindex valuable landing pages or index development and preview routes.
+
+### Structured data
+
+Inspect the existing structured data and add only valid, relevant schemas where supported.
+
+Consider `SoftwareApplication`, `WebSite`, and `Organization` where the associated information is accurate and appropriate.
+
+Use genuine product name, category, platform information, official URLs, and pricing information only where verified.
+
+Do not invent ratings, reviews, aggregate review counts, prices, or ratings to obtain rich results.
+
+Validate the generated markup where suitable tools are available.
+
+### Landing-page quality
+
+Review existing feature pages and give each page one clear search intent.
+
+Prioritize useful content for:
+
+- Printing from Android to a Windows printer.
+- Printing from iPhone and iPad through supported browser workflows.
+- Printing from a phone to a USB-connected printer.
+- Wireless and remote printing.
+- Document scanning and OCR.
+- ID-card scanning.
+- Printer and operating-system compatibility.
+
+Reuse existing pages and improve them where possible.
+
+Do not generate dozens of nearly identical programmatic SEO pages. Add or rewrite pages only when the user intent and the available technical evidence justify them.
+
+Every important landing page should have a clear explanation, useful screenshots or diagrams, verified instructions, relevant internal links, and an appropriate next step.
+
+---
+
+## 6. Performance and frontend quality
+
+Optimize the actual implementation rather than simply applying a new visual theme.
+
+Inspect and improve, where necessary:
+
+- Largest Contentful Paint (LCP).
+- Interaction to Next Paint (INP).
+- Cumulative Layout Shift (CLS).
+- Image compression and responsive image delivery.
+- Font loading and font-display behavior.
+- JavaScript bundles and unnecessary dependencies.
+- Above-the-fold rendering.
+- Lazy-loading of below-the-fold media.
+- Layout stability.
+- Hydration and console errors.
+- Caching and compression.
+- Mobile navigation and responsive overflow.
+
+Use lightweight CSS and SVG for illustrations when appropriate.
+
+Do not introduce a heavy animation framework for effects that can be achieved using CSS.
+
+Avoid loading nonessential third-party scripts before the primary content renders.
+
+Do not remove meaningful content or functionality simply to improve a synthetic performance score.
+
+Run Lighthouse or PageSpeed Insights when available and report actual results. Never fabricate performance measurements.
+
+---
+
+## 7. Accessibility and responsive behavior
+
+Implement the following:
+
+- Semantic HTML.
+- A logical H1–H6 structure.
+- Keyboard-accessible controls.
+- Visible focus indicators.
+- Descriptive button and link names.
+- Accessible mobile navigation.
+- Appropriate form labels and error states.
+- Sufficient text and interface contrast.
+- Reduced-motion support.
+- Proper image alternatives.
+- Accessible accordions and dialogs.
+- Correct use of ARIA only where necessary.
+- Responsive page grids and readable typography.
+
+Test representative small mobile, large mobile, tablet, laptop, and desktop viewports.
+
+Check for horizontal overflow, clipped content, overlapping CTAs, unreadable text, and awkward line breaks.
+
+---
+
+## 8. Animation and interaction requirements
+
+The redesigned page must be a real, functional web experience, not just a collection of attractive static sections.
+
+Implement purposeful interactions such as:
+
+- Responsive mobile navigation.
+- Accessible FAQ accordion.
+- Functional download and support buttons.
+- Product demonstration controls, if applicable.
+- Lightweight animated workflow diagrams.
+- Subtle visual transitions.
+- Appropriate hover, focus, pressed, and disabled states.
+
+Use CSS animations, transitions, and SVG-based motion where they fit the existing architecture.
+
+Respect `prefers-reduced-motion`.
+
+Avoid animations that cause layout shifts, delay content visibility, consume unnecessary resources, or make the page difficult to navigate.
+
+Do not animate controls that do nothing.
+
+---
+
+## 9. Analytics and conversion improvement
+
+Review existing analytics integrations and the website's privacy commitments.
+
+Do not add invasive tracking by default.
+
+Where the site's architecture and privacy policy support it, measure aggregate product-discovery events, such as:
+
+- Windows download click.
+- Android download click.
+- Browser-print workflow launch.
+- Setup-guide visit.
+- Compatibility-page visit.
+- Troubleshooting-page visit.
+
+Instrument only necessary events and ensure the tracking behavior is disclosed and consistent with the privacy policy and applicable requirements.
+
+Do not include file names, document contents, private IP addresses, personal print-job information, credentials, pairing tokens, or other sensitive data in analytics.
+
+Do not claim to measure successful printing unless the existing product or a privacy-appropriate integration can reliably establish that event.
+
+Clearly document any analytics that remain disabled or require configuration.
+
+---
+
+## 10. Code quality and implementation workflow
+
+Implement in small, coherent steps.
+
+1. Inspect the current architecture and record existing functionality.
+2. Identify and reuse the project's established design tokens and components.
+3. Build the revised header and hero.
+4. Implement the workflow demonstration and core benefit sections.
+5. Reorganize compatibility, privacy, downloads, FAQs, and footer content.
+6. Update shared documentation and correct inconsistent claims.
+7. Implement metadata, canonical tags, structured data, sitemap, and robots directives as appropriate.
+8. Improve responsive behavior, accessibility, motion, and performance.
+9. Run formatting, linting, type checks, builds, and relevant automated tests.
+10. Open the actual rendered website or use available browser tooling to inspect it at desktop and mobile sizes.
+11. Fix the errors and regressions discovered during verification.
+12. Review the final changes and report what remains unverified.
+
+Inspect existing components before introducing new ones. Reuse components when their existing behavior and styling are suitable.
+
+Avoid unrelated refactors and unnecessary code churn.
+
+Do not replace project configuration, environment variables, deployment settings, or dependency versions without a clear technical justification.
+
+Do not expose secrets, credentials, or environment-variable values in logs, client-side code, commits, or documentation.
+
+---
+
+## 11. Acceptance criteria
+
+Consider the implementation complete only when the applicable requirements below have been met.
+
+### Product and content
+
+- The hero clearly explains the product, its main benefit, and the Windows PC requirement.
+- Users can understand the three-step printing workflow without reading technical documentation.
+- Each visible download button links to a verified destination.
+- The supported mobile and browser workflows are explained accurately.
+- Privacy, remote-printing, compatibility, telemetry, and licensing statements are consistent with the available evidence.
+- No unsupported metrics, testimonials, security guarantees, or certifications have been introduced.
+
+### Design and interaction
+
+- The homepage has a coherent visual hierarchy and consistent design system.
+- It renders correctly on desktop and mobile without horizontal overflow.
+- Navigation, accordions, links, and CTA buttons function correctly.
+- Product demonstrations use authentic assets or clearly identified illustrative interfaces.
+- Animations respect reduced-motion preferences and do not block basic functionality.
+
+### SEO
+
+- Important pages have appropriate unique metadata.
+- Canonical URLs, robots directives, sitemap, and structured data are correct where relevant.
+- Existing valuable URLs and working links are preserved.
+- No accidental development indexing, broken internal links, or fabricated structured-data claims remain.
+
+### Engineering
+
+- The production build completes successfully, or any pre-existing blockers are documented precisely.
+- Linting and type checks pass where supported.
+- No new unresolved console errors or hydration failures are introduced.
+- Existing download functionality and essential product links remain intact.
+- Measured performance results are reported honestly.
+- The resulting code remains maintainable and compatible with the existing stack.
+
+If an acceptance criterion cannot be verified with the tools available, explicitly state what is missing and how it can be verified. Do not claim success without evidence.
+
+---
+
+## 12. Required final report
+
+After making the actual code changes, provide a concise but useful implementation report with these sections:
+
+**A. Completed changes**
+Summarize the homepage redesign, shared components, content corrections, SEO, accessibility, and performance work.
+
+**B. Files changed**
+List the important files created or modified and explain their purpose.
+
+**C. Verification**
+List the actual commands run and their results, such as build, lint, type checking, automated tests, responsive browser checks, and Lighthouse measurements.
+
+**D. Issues resolved**
+Describe the broken links, inconsistencies, rendering issues, or other problems fixed.
+
+**E. Remaining limitations**
+List any facts that could not be verified, unavailable assets, missing credentials, external setup requirements, or tests that could not be performed.
+
+**F. Recommended next improvements**
+Identify only the most valuable remaining items, such as obtaining genuine product screenshots, signed release artifacts, or Search Console performance data.
+
+Use the existing repository and actual tools to complete the work. Do not merely return the redesigned code as a suggestion: implement it in the working project, verify it, and clearly disclose any incomplete work.
+
+## Final instruction
+
+Prioritize clarity, trust, usability, and a successful first print over visual novelty.
+
+The finished Printora website should help a new visitor understand what the product does, confirm whether it will work with their setup, trust the explanation of privacy and security, download the correct software, and complete their first print with minimal confusion.
+
+Begin by inspecting the repository and the current implementation. Then implement the improvements directly.

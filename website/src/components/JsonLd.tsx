@@ -9,7 +9,7 @@ export function JsonLd() {
     "operatingSystem": "Windows 10, Windows 11, Android 8.0+",
     "applicationCategory": "UtilitiesApplication",
     "description": siteConfig.description,
-    "softwareVersion": "1.0.0",
+    "softwareVersion": "2.2.3",
     "url": siteConfig.url,
     "downloadUrl": siteConfig.windowsDownloadUrl,
     "featureList": [
@@ -27,13 +27,7 @@ export function JsonLd() {
       "price": "0",
       "priceCurrency": "USD"
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "ratingCount": "128",
-      "bestRating": "5",
-      "worstRating": "1"
-    },
+
     "author": {
       "@type": "Person",
       "name": siteConfig.developer.name,

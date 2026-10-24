@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    agentUpgrade: "security",
+  } as unknown as NextConfig["experimental"],
   async redirects() {
     return [
       {
