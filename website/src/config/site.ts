@@ -20,9 +20,9 @@ export const siteConfig = {
   githubUrl: "https://github.com/sagarsahni6/printora-cloud-print",
   windowsDownloadUrl: "/download/windows",
   androidDownloadUrl: "/download/android",
-  directWindowsExeUrl: "/api/download/windows",
-  directWindowsZipUrl: "/api/download/windows-portable",
-  directAndroidApkUrl: "/api/download/android",
+  directWindowsExeUrl: "https://github.com/sagarsahni6/printora-cloud-print/releases/latest/download/PrintoraServer-Setup.exe",
+  directWindowsZipUrl: "https://github.com/sagarsahni6/printora-cloud-print/releases/latest/download/PrintoraServer-Windows.zip",
+  directAndroidApkUrl: "https://github.com/sagarsahni6/printora-cloud-print/releases/latest/download/Printora-Android.apk",
   checksumsUrl: "https://github.com/sagarsahni6/printora-cloud-print/releases/latest/download/SHA256SUMS.txt",
   navItems: [
     { label: "Features", href: "/#features" },

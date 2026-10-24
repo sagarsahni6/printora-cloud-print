@@ -67,7 +67,7 @@ export default function DownloadWindowsPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Server v2.2.2</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Printora Server v2.2.3</h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                 Stable Release
               </span>
