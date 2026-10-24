@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { Printer, ExternalLink, Mail } from "lucide-react";
+import { isHostPortalRoute } from "@/lib/routes";
 
 function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -12,6 +16,12 @@ function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Isolate host Web Print Studio routes from marketing landing page footer
+  if (isHostPortalRoute(pathname)) {
+    return null;
+  }
   return (
     <footer className="relative bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-[#09150f] dark:via-[#07110c] dark:to-[#040906] text-slate-600 dark:text-slate-400 border-t border-slate-200/80 dark:border-emerald-950/60 pt-16 pb-12 text-xs overflow-hidden transition-colors">
       {/* Ambient background glow accents */}

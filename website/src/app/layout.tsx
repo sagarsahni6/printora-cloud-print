@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
@@ -97,9 +98,13 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col font-sans bg-[var(--background)] text-[var(--foreground)] antialiased selection:bg-emerald-500/20 selection:text-emerald-700">
         <JsonLd />
-        <Navbar />
+        <Suspense fallback={null}>
+          <Navbar />
+        </Suspense>
         <main className="flex-1">{children}</main>
-        <Footer />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
       </body>
     </html>
   );
