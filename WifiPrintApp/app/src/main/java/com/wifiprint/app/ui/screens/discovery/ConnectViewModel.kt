@@ -105,8 +105,15 @@ class ConnectViewModel @Inject constructor(
         pin: String? = null,
         tunnelUrl: String? = null
     ) {
+        val serverId = if (ip.isNotBlank() && port > 0) {
+            "$ip:$port"
+        } else if (!tunnelUrl.isNullOrBlank()) {
+            tunnelUrl
+        } else {
+            "server_${System.currentTimeMillis()}"
+        }
         val server = ServerInfo(
-            id = if (!tunnelUrl.isNullOrBlank()) tunnelUrl else "$ip:$port",
+            id = serverId,
             name = name,
             ipAddress = ip,
             port = port,

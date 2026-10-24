@@ -572,14 +572,7 @@ public partial class MainWindow : Window
             }
             else if (!string.IsNullOrWhiteSpace(tunnelUrl))
             {
-                if (Uri.TryCreate(tunnelUrl, UriKind.Absolute, out var uri))
-                {
-                    CloudStatusText.Text = $"Cloud: {uri.Host}";
-                }
-                else
-                {
-                    CloudStatusText.Text = "Cloud: Active";
-                }
+                CloudStatusText.Text = "Cloud: printora.calclabz.com";
                 CloudStatusText.ToolTip = Program.Settings.GetWebPrintUrl(tunnelUrl, ip);
                 CloudStatusText.Visibility = Visibility.Visible;
             }
@@ -806,14 +799,7 @@ public partial class MainWindow : Window
                     ip, port, name, cert, Program.Settings.CurrentQrPairingToken, tunnelUrl);
                 QrCodeImage.Source = qrImage;
 
-                if (!string.IsNullOrEmpty(tunnelUrl))
-                {
-                    QrInfoText.Text = $"☁ {tunnelUrl}";
-                }
-                else
-                {
-                    QrInfoText.Text = $"{ip}:{port} (local network only)";
-                }
+                QrInfoText.Text = $"☁ {webUrl}";
                 AppendLog($"[{DateTime.Now:HH:mm:ss}] 📱 Android App Pairing QR ready");
             }
         }
@@ -1006,7 +992,7 @@ public partial class MainWindow : Window
             ? Program.Settings.CustomPublicUrl.Trim()
             : Program.TunnelServiceInstance?.PublicUrl;
 
-        var webUrl = !string.IsNullOrWhiteSpace(tunnelUrl) ? tunnelUrl : $"https://{ip}:{port}";
+        var webUrl = Program.Settings.GetWebPrintUrl(tunnelUrl, ip);
 
         // Use direct URL QR so standard phone cameras can scan it immediately
         var qrBitmap = _isWebQrMode
@@ -1073,7 +1059,7 @@ public partial class MainWindow : Window
 
         var serverInfo = new TextBlock
         {
-            Text = $"Server: {name}   •   {(string.IsNullOrEmpty(tunnelUrl) ? $"{ip}:{port}" : tunnelUrl)}",
+            Text = $"Server: {name}   •   {webUrl}",
             FontSize = 13,
             FontWeight = FontWeights.SemiBold,
             Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#334155")!,
@@ -1175,9 +1161,10 @@ public partial class MainWindow : Window
                 UpdateTunnelStatus(url);
                 // Re-generate the on-screen QR to include the live tunnel URL
                 GenerateConnectionQrCode();
-                AppendLog($"[{DateTime.Now:HH:mm:ss}] 🌐 Cloud Relay active: {url}");
+                var brandedUrl = Program.Settings.GetWebPrintUrl(url);
+                AppendLog($"[{DateTime.Now:HH:mm:ss}] 🌐 Cloud Relay active: {brandedUrl}");
                 App.ShowTrayNotification("☁ Cloud Relay Active",
-                    $"Print from anywhere: {url}", System.Windows.Forms.ToolTipIcon.Info);
+                    $"Print from anywhere: {brandedUrl}", System.Windows.Forms.ToolTipIcon.Info);
             });
         };
 
@@ -1195,9 +1182,10 @@ public partial class MainWindow : Window
         // If the tunnel is already active (startup race), update UI immediately
         if (Program.TunnelServiceInstance.IsActive && !string.IsNullOrEmpty(Program.TunnelServiceInstance.PublicUrl))
         {
+            var brandedUrl = Program.Settings.GetWebPrintUrl(Program.TunnelServiceInstance.PublicUrl);
             UpdateTunnelStatus(Program.TunnelServiceInstance.PublicUrl);
             GenerateConnectionQrCode();
-            AppendLog($"[{DateTime.Now:HH:mm:ss}] 🌐 Cloud Relay already active: {Program.TunnelServiceInstance.PublicUrl}");
+            AppendLog($"[{DateTime.Now:HH:mm:ss}] 🌐 Cloud Relay already active: {brandedUrl}");
         }
     }
 
@@ -1240,7 +1228,7 @@ public partial class MainWindow : Window
             TunnelStatusBorder.BorderBrush = new System.Windows.Media.SolidColorBrush(
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#BBF7D0"));
             TunnelStatusText.Text = "🌐 Tunnel: Active";
-            TunnelUrlText.Text = tunnelUrl;
+            TunnelUrlText.Text = Program.Settings.GetWebPrintUrl(tunnelUrl);
         }
         else
         {

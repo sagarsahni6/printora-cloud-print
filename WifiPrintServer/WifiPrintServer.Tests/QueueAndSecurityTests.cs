@@ -865,6 +865,51 @@ public sealed class QueueAndSecurityTests : IDisposable
         Assert.False(FileProcessingService.ValidateFileContent(fakeDocx, ".docx"));
     }
 
+    [Fact]
+    public void AppSettings_NormalizeSecrets_Cleans_Legacy_Hardcoded_Public_Urls()
+    {
+        var settings = new AppSettings
+        {
+            CustomPublicUrl = "https://printora.calclabz.com"
+        };
+
+        settings.Save();
+        Assert.Null(settings.CustomPublicUrl);
+    }
+
+    [Fact]
+    public void AppSettings_GetWebPrintUrl_Uses_Branded_Host_Url_When_CustomUrl_Not_Set()
+    {
+        var settings = new AppSettings();
+        var tunnelUrl = "https://unique-pc-tunnel.trycloudflare.com";
+        var localIp = "192.168.1.50";
+
+        var urlWithTunnel = settings.GetWebPrintUrl(tunnelUrl, localIp);
+        Assert.Equal($"https://printora.calclabz.com/{settings.HostIdentifier}", urlWithTunnel);
+
+        var urlWithoutTunnel = settings.GetWebPrintUrl(null, localIp);
+        Assert.Equal($"https://printora.calclabz.com/{settings.HostIdentifier}", urlWithoutTunnel);
+
+        var localUrl = settings.GetLocalWebPrintUrl(localIp);
+        Assert.Equal($"https://{localIp}:{settings.ServerPort}/{settings.HostIdentifier}", localUrl);
+    }
+
+    [Fact]
+    public void QrCodeService_Generates_Payload_With_Host_Specific_Tunnel()
+    {
+        var payload = QrCodeService.GetConnectionPayloadJson(
+            "192.168.1.50",
+            5000,
+            "PC-2",
+            null,
+            "TOKEN123",
+            "https://pc2-tunnel.trycloudflare.com");
+
+        Assert.Contains("\"ip\":\"192.168.1.50\"", payload);
+        Assert.Contains("\"tunnel\":\"https://pc2-tunnel.trycloudflare.com\"", payload);
+        Assert.DoesNotContain("printora.calclabz.com", payload);
+    }
+
     private sealed class TestDbContextFactory : IDbContextFactory<ServerStateContext>
     {
         private readonly DbContextOptions<ServerStateContext> _options;

@@ -204,56 +204,9 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
-            // 2. Scan network for servers on the SAME local Wi-Fi subnet and auto-connect
-            Log.d(TAG, "Scanning for Printora servers on the same local network...")
-            discoveryManager.startDiscovery()
-
-            var autoConnected = false
-            try {
-                withTimeoutOrNull(4500L) {
-                    discoveryManager.discoveredServers.first { list ->
-                        val localServer = list.firstOrNull { it.isSameNetwork }
-                        if (localServer != null) {
-                            Log.d(TAG, "Found local server on same Wi-Fi: ${localServer.name} (${localServer.ipAddress})")
-                            val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
-                            val autoResult = repository.requestConnectionApproval(
-                                serverIp = localServer.ipAddress,
-                                port = localServer.port,
-                                deviceName = deviceName
-                            )
-
-                            autoResult.fold(
-                                onSuccess = { auth ->
-                                    Log.d(TAG, "Auto-connection successful: ${auth.serverName}")
-                                    autoConnected = true
-                                    _uiState.update {
-                                        it.copy(
-                                            isConnected = true,
-                                            isConnecting = false,
-                                            serverName = auth.serverName,
-                                            serverIp = "${localServer.ipAddress}:${localServer.port}",
-                                            connectionMessage = null
-                                        )
-                                    }
-                                },
-                                onFailure = { e ->
-                                    Log.w(TAG, "Auto-connect attempt failed: ${e.message}")
-                                }
-                            )
-                            true // Stop collecting — we found a same-network server
-                        } else {
-                            false // Keep waiting for more servers
-                        }
-                    }
-                }
-            } catch (_: Exception) {
-            } finally {
-                discoveryManager.stopDiscovery()
-                // Only reset isConnecting if we didn't successfully connect
-                if (!autoConnected) {
-                    _uiState.update { it.copy(isConnecting = false) }
-                }
-            }
+            // If saved server could not be reconnected or does not exist,
+            // stop auto-connecting so the user can scan the QR code or select a server.
+            _uiState.update { it.copy(isConnecting = false) }
         }
     }
 

@@ -1042,19 +1042,49 @@ public class AdminController : ControllerBase
         using (var g = Graphics.FromImage(bitmap))
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // Printora brand gradient: dark forest → emerald green
             using var bgBrush = new LinearGradientBrush(
-                new Point(0, 0),
-                new Point(size, size),
-                Color.FromArgb(0, 103, 192),
-                Color.FromArgb(0, 82, 163));
+                new Point(0, 0), new Point(size, size),
+                Color.FromArgb(8, 18, 13),     // #08120D
+                Color.FromArgb(10, 119, 70));   // #0A7746
             g.FillRectangle(bgBrush, 0, 0, size, size);
 
-            using var whiteBrush = new SolidBrush(Color.White);
-            float scale = size / 100f;
-            g.FillRectangle(whiteBrush, 30 * scale, 16 * scale, 40 * scale, 24 * scale);
-            g.FillRectangle(whiteBrush, 18 * scale, 36 * scale, 64 * scale, 34 * scale);
-            using var darkBrush = new SolidBrush(Color.FromArgb(0, 103, 192));
-            g.FillRectangle(darkBrush, 28 * scale, 52 * scale, 44 * scale, 28 * scale);
+            float s = size / 100f;
+            using var white = new SolidBrush(Color.White);
+            var emerald = Color.FromArgb(52, 211, 153); // #34D399
+
+            // Wi-Fi signal arcs above printer
+            using var arcPen = new Pen(emerald, 2.5f * s) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+            g.DrawArc(arcPen, 35 * s, 12 * s, 30 * s, 18 * s, 180, 180);
+            using var innerPen = new Pen(emerald, 2f * s) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+            g.DrawArc(innerPen, 40 * s, 17 * s, 20 * s, 12 * s, 180, 180);
+
+            // Center beacon dot
+            using var ledBrush = new SolidBrush(emerald);
+            g.FillEllipse(ledBrush, 48.5f * s, 27f * s, 3f * s, 3f * s);
+
+            // Input paper sheet
+            g.FillRectangle(white, 30 * s, 33 * s, 40 * s, 14 * s);
+
+            // Printer main chassis
+            g.FillRectangle(white, 20 * s, 44 * s, 60 * s, 24 * s);
+
+            // Output paper slot (dark inset)
+            using var slotBrush = new SolidBrush(Color.FromArgb(8, 18, 13));
+            g.FillRectangle(slotBrush, 28 * s, 56 * s, 44 * s, 8 * s);
+
+            // Output printed document
+            g.FillRectangle(white, 32 * s, 62 * s, 36 * s, 18 * s);
+
+            // Print content lines on output paper
+            using var linePen = new Pen(Color.FromArgb(10, 119, 70), 2f * s) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+            g.DrawLine(linePen, 37 * s, 68 * s, 63 * s, 68 * s);
+            using var linePen2 = new Pen(Color.FromArgb(16, 185, 129), 2f * s) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+            g.DrawLine(linePen2, 37 * s, 73 * s, 53 * s, 73 * s);
+
+            // Status LED on printer body
+            g.FillEllipse(ledBrush, 70 * s, 48 * s, 4 * s, 4 * s);
         }
 
         var ms = new MemoryStream();

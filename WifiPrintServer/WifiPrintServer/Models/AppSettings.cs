@@ -76,8 +76,7 @@ public class AppSettings
     /// <summary>
     /// Optional permanent public URL, DDNS, or Cloudflare Tunnel domain (e.g. https://print.yourdomain.com).
     /// If set, this fixed URL is embedded in the permanent QR code so paper-printed QR codes work forever.
-    /// </summary>
-    public string? CustomPublicUrl { get; set; } = "https://printora.calclabz.com";
+    public string? CustomPublicUrl { get; set; }
 
     /// <summary>
     /// How long (in minutes) a device session lasts after pairing.
@@ -172,9 +171,14 @@ public class AppSettings
     }
 
     /// <summary>
+    /// Default branded public domain for all host devices.
+    /// </summary>
+    public const string DefaultPublicBaseUrl = "https://printora.calclabz.com";
+
+    /// <summary>
     /// Gets the unique public Web Print URL for this Host PC.
-    /// Format: https://{domain}/{HostIdentifier} or https://{tunnel}/{HostIdentifier}
-    /// e.g. https://print.yourshop.com/DESKTOP-PLK2AIK-W-58291
+    /// Format: https://printora.calclabz.com/{HostIdentifier}
+    /// (or https://{customDomain}/{HostIdentifier} if explicitly customized by user)
     /// </summary>
     public string GetWebPrintUrl(string? tunnelUrl = null, string? localIp = null)
     {
@@ -183,17 +187,21 @@ public class AppSettings
         {
             baseUrl = CustomPublicUrl.Trim().TrimEnd('/');
         }
-        else if (!string.IsNullOrWhiteSpace(tunnelUrl))
-        {
-            baseUrl = tunnelUrl.Trim().TrimEnd('/');
-        }
         else
         {
-            var ip = !string.IsNullOrWhiteSpace(localIp) ? localIp : "127.0.0.1";
-            baseUrl = $"https://{ip}:{ServerPort}";
+            baseUrl = DefaultPublicBaseUrl;
         }
 
         return $"{baseUrl}/{HostIdentifier}";
+    }
+
+    /// <summary>
+    /// Gets the direct local LAN Web Print URL for this Host PC.
+    /// </summary>
+    public string GetLocalWebPrintUrl(string? localIp = null)
+    {
+        var ip = !string.IsNullOrWhiteSpace(localIp) ? localIp : "127.0.0.1";
+        return $"https://{ip}:{ServerPort}/{HostIdentifier}";
     }
 
     /// <summary>
@@ -320,8 +328,12 @@ public class AppSettings
         if (string.IsNullOrWhiteSpace(HostIdentifier))
             HostIdentifier = GenerateHostIdentifier();
 
-        if (string.IsNullOrWhiteSpace(CustomPublicUrl))
-            CustomPublicUrl = "https://printora.calclabz.com";
+        // Reset legacy hardcoded marketing/relay domain so each host uses its own unique tunnel or local IP
+        if (string.Equals(CustomPublicUrl, "https://printora.calclabz.com", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(CustomPublicUrl, "https://relay.calclabz.com", StringComparison.OrdinalIgnoreCase))
+        {
+            CustomPublicUrl = null;
+        }
     }
 
     public static string GenerateAlphanumericPassword(int length)

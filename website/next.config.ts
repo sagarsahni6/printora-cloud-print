@@ -27,30 +27,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      {
-        source: "/:hostId([A-Za-z0-9_-]+-[0-9]{4,6})",
-        destination: "https://relay.calclabz.com/:hostId",
-      },
-      {
-        source: "/:hostId([A-Za-z0-9_-]+-[0-9]{4,6})/:path*",
-        destination: "https://relay.calclabz.com/:hostId/:path*",
-      },
-      {
-        source: "/api/web/:path*",
-        destination: "https://relay.calclabz.com/api/web/:path*",
-      },
-      {
-        source: "/api/admin/:path*",
-        destination: "https://relay.calclabz.com/api/admin/:path*",
-      },
-      {
-        source: "/api/auth/:path*",
-        destination: "https://relay.calclabz.com/api/auth/:path*",
-      },
-    ];
-  },
   async headers() {
     return [
       {

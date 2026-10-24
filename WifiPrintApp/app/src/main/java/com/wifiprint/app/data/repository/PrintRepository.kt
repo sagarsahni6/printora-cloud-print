@@ -181,13 +181,14 @@ class PrintRepository @Inject constructor(
         val hasTunnel = !tunnelUrl.isNullOrBlank()
         val normalizedTunnel = tunnelUrl?.trim()?.let { if (it.endsWith("/")) it else "$it/" }
         val isSameNet = serverIp.isNotBlank() && networkMonitor.isSameLocalSubnet(serverIp)
+        val isWifi = networkMonitor.checkWifiConnected()
 
-        // Fast LAN probe: if local IP is provided, test if the port is reachable with 1.0s timeout
+        // Fast LAN probe: if local IP is provided, test if the port is reachable with 2.5s timeout
         val isLocalReachable = if (serverIp.isNotBlank() && port > 0) {
             withContext(Dispatchers.IO) {
                 try {
                     Socket().use { socket ->
-                        socket.connect(InetSocketAddress(serverIp, port), 1000)
+                        socket.connect(InetSocketAddress(serverIp, port), 2500)
                         true
                     }
                 } catch (_: Exception) {
@@ -197,11 +198,11 @@ class PrintRepository @Inject constructor(
         } else false
 
         // Build list of target URLs to try:
-        // 1. If local IP port is confirmed open right now (takes ~20ms on LAN), try local IP first!
-        // 2. If local IP is unreachable, or if tunnel is available and not reachable locally, try tunnel FIRST!
+        // 1. If local IP port is confirmed open or phone is on Wi-Fi with same local subnet, try local IP first!
+        // 2. If phone is on cellular / different network, try the PC's unique tunnel first!
         val urlsToTry = mutableListOf<String>()
-        if (isLocalReachable) {
-            urlsToTry.add("https://$serverIp:$port/")
+        if (isLocalReachable || (isWifi && isSameNet)) {
+            if (serverIp.isNotBlank()) urlsToTry.add("https://$serverIp:$port/")
             if (hasTunnel) urlsToTry.add(normalizedTunnel!!)
         } else if (hasTunnel) {
             urlsToTry.add(normalizedTunnel!!)
@@ -218,8 +219,8 @@ class PrintRepository @Inject constructor(
 
             try {
                 // If local IP is attempted while a tunnel is also available as fallback,
-                // use a short 3-second connect timeout so we don't block the user.
-                val connectTimeout = if (!isTunnelTarget && hasTunnel) 3L else 15L
+                // use a 5-second connect timeout so we don't stall on unreachable LAN IP.
+                val connectTimeout = if (!isTunnelTarget && hasTunnel) 5L else 15L
                 val tempApi = createApiService(
                     baseUrl = targetBaseUrl,
                     token = null,
