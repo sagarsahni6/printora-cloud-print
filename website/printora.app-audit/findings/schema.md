@@ -1,93 +1,81 @@
-# Schema & Structured Data Audit: Printora (printora.app)
+# Schema & Structured Data Audit: Printora (printora.calclabz.com)
 
-**Category Score**: 58 / 100  
+**Category Score**: 95 / 100  
 **Weight**: 10%  
-**Status**: Critical Fix Required (1 Critical Finding, 2 Medium Findings)
+**Status**: High Quality / Video Schema Opportunity (1 Medium Finding)  
+**Audit Date**: October 24, 2026
 
 ---
 
 ## 1. Executive Summary
 
-The structured data implementation uses standard JSON-LD syntax without parsing errors. However, there is a **critical schema implementation error**: `RootLayout` unconditionally renders `<JsonLd />`, resulting in **10 FAQ Q&A pairs being injected sitewide into all 26 pages** (including `/terms`, `/privacy`, `/download/*`, and all procedural guides). 
+The structured data implementation adheres strictly to Schema.org standards with zero syntax or JSON-LD parsing errors. Sitewide FAQPage pollution has been completely eliminated; `FAQPage` schema is rendered exclusively on pages featuring visible FAQ components. Additionally, `BreadcrumbList`, `HowTo`, `SoftwareApplication`, `Organization`, and `WebSite` schemas are properly mapped.
 
-This is an explicit violation of Google's Search Central Structured Data Guidelines and risks algorithmic penalty or disqualification from rich search results.
+The primary improvement opportunity is the addition of **`VideoObject` structured data** for the newly released high-definition product demonstration video (`/printora-product-video.mp4`) featured in `Hero.tsx`.
 
 ---
 
 ## 2. Key Findings
 
-### 2.1 Sitewide FAQPage Schema Pollution (Critical)
-- **Severity**: Critical (P0)
-- **Guidelines Violated**: Google Search Central FAQ Guidelines:
-  > *"Only use FAQPage if your page has a list of questions and answers. If the page doesn't have an FAQ, don't use FAQPage."*  
-  > *"Every question must be visible to the user on the page itself."*
-- **Evidence**:
-  In `src/app/layout.tsx`:
-  ```tsx
-  <body className="...">
-    <JsonLd /> {/* Injected globally onto all pages! */}
-    <Navbar />
-    <main>{children}</main>
-    <Footer />
-  </body>
-  ```
-  In `src/components/JsonLd.tsx`:
-  ```tsx
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": FAQ_ITEMS.slice(0, 10).map(...)
-  };
-  ```
-  Result:
-  - Visiting `https://printora.app/terms` injects 10 FAQ questions about Wi-Fi printing into Google's parser, even though `/terms` only contains legal text!
-  - Visiting `https://printora.app/privacy` injects 10 FAQ questions.
-  - Visiting `https://printora.app/download/windows` injects 10 FAQ questions.
-- **Risk**: Google flags mismatched structured data as deceptive or spammy markup. In addition to ignoring the FAQ rich snippet, Google may revoke rich results for other schemas on the domain.
-- **Remediation**:
-  1. Remove `<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />` from `JsonLd.tsx`.
-  2. Create a dedicated `<FaqJsonLd />` component and place it exclusively in:
-     - `src/app/faq/page.tsx`
-     - `src/app/page.tsx` (where the FAQ accordion is visually rendered)
-
----
-
-### 2.2 Missing BreadcrumbList Schema on Nested Routes
+### 2.1 Missing `VideoObject` Schema for Hero Video (Opportunity)
 - **Severity**: Medium (P2)
-- **Impact**: Google cannot render breadcrumb trails in mobile and desktop SERPs (e.g., `printora.app > Features > Wireless Printing`).
+- **Impact**: Google Search features rich video snippets (video carousels, thumbnail previews, timestamps) for pages declaring `VideoObject` structured data. Printora recently added an HD walkthrough video player directly in the hero section, but does not provide machine-readable metadata.
+- **Evidence**:
+  In `src/components/Hero.tsx`:
+  ```tsx
+  <video
+    className="w-full h-auto aspect-video object-cover block rounded-2xl"
+    autoPlay
+    loop
+    muted
+    playsInline
+    preload="auto"
+    poster="/printora-video-poster.jpg"
+  >
+    <source src="/printora-product-video.mp4" type="video/mp4" />
+  </video>
+  ```
+  No corresponding `<script type="application/ld+json">` with `@type: "VideoObject"` exists.
 - **Remediation**:
-  Add `BreadcrumbList` schema to all subpages. Example for `/features/wireless-printing`:
-  ```json
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://printora.app"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Features",
-        "item": "https://printora.app/#features"
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": "Wireless Printing",
-        "item": "https://printora.app/features/wireless-printing"
+  Add `VideoJsonLd` component to `src/components/JsonLd.tsx`:
+  ```tsx
+  export function VideoJsonLd() {
+    const videoSchema = {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "Printora Wireless & Remote Printing Software Walkthrough",
+      "description": "Watch how Printora turns any Windows PC into a local Wi-Fi print host for Android phones, iPhones via QR Web Print, and remote printing via Cloudflare Tunnel.",
+      "thumbnailUrl": "https://printora.calclabz.com/printora-video-poster.jpg",
+      "uploadDate": "2026-10-24T12:00:00+05:30",
+      "contentUrl": "https://printora.calclabz.com/printora-product-video.mp4",
+      "embedUrl": "https://printora.calclabz.com",
+      "publisher": {
+        "@type": "Organization",
+        "name": "CalcLabz",
+        "url": "https://calclabz.com"
       }
-    ]
+    };
+
+    return (
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(videoSchema) }}
+      />
+    );
   }
   ```
+  Render `<VideoJsonLd />` on the homepage (`src/app/page.tsx`).
 
 ---
 
-### 2.3 Missing HowTo Schema on Procedural Guides
-- **Severity**: Medium (P2)
-- **Impact**: The site has 8 high-quality procedural guides (e.g., `/print-from-android-to-windows-printer`, `/print-from-iphone-to-windows-printer`, `/id-card-scanner-to-pdf`) but none implement `HowTo` schema.
-- **Remediation**:
-  Add `HowTo` structured data specifying `step` elements, `totalTime`, and `supply`/`tool` prerequisites (e.g., Windows PC, USB Printer, Android phone).
+## 3. Schema Verification Status
+
+| Schema Type | Location | Status | Validation Note |
+|---|---|---|---|
+| `SoftwareApplication` | Sitewide (`JsonLd.tsx`) | PASS | Declares v2.2.3, Windows 10/11, Android 8.0+, $0 offer |
+| `Organization` | Sitewide (`JsonLd.tsx`) | PASS | Declares parent organization CalcLabz and GitHub links |
+| `WebSite` | Sitewide (`JsonLd.tsx`) | PASS | Declares site name, description, and canonical root |
+| `BreadcrumbList` | All 29 Subpages | PASS | Ordered position hierarchy matching URL taxonomy |
+| `HowTo` | 8 Procedural Guides | PASS | Step-by-step instructions with tools and supplies |
+| `FAQPage` | `/`, `/faq`, and guides | PASS | 100% matched to visible DOM accordions (Google compliant) |
+| `VideoObject` | Homepage (`Hero.tsx`) | **RECOMMENDED** | Rich snippet opportunity for `/printora-product-video.mp4` |

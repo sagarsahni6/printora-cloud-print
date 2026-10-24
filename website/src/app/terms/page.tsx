@@ -5,7 +5,7 @@ import { constructMetadata } from "@/lib/metadata";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
-  title: "Terms of Service",
+  title: "Terms of Service & Acceptable Use Policy",
   description: "Terms and conditions for utilizing the Printora source-available print server and mobile printing software.",
   path: "/terms",
   keywords: [

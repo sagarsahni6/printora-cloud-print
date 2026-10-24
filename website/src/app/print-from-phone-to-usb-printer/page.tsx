@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "How to Print from Phone to a USB Printer (No Wi-Fi Printer Required)",
-  description: "Connect your Android phone or iPhone to a traditional USB-cable printer via a Windows host PC. Printora turns legacy USB printers into modern wireless print stations.",
+  title: "Print from Phone to USB Printer via Windows",
+  description: "Connect your Android or iPhone to any USB printer via a Windows PC. Printora turns legacy USB printers into wireless print stations with zero cloud hops.",
   path: "/print-from-phone-to-usb-printer",
   keywords: [
     "print from phone to usb printer",

@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "Mobile Document Scanner to PDF – Multi-Page Phone Scanning",
-  description: "Transform your smartphone into a high-precision document scanner with automatic edge detection, perspective warping, contrast filters, and direct 300 DPI PDF creation.",
+  title: "Mobile Document Scanner to PDF Multi-Page",
+  description: "Turn your phone into a high-precision document scanner with automatic edge detection, perspective flattening, contrast filters, and 300 DPI PDF creation.",
   path: "/mobile-document-scanner-to-pdf",
   keywords: [
     "mobile document scanner to pdf",

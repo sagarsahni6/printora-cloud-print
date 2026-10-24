@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "How to Print from Android to a Windows Printer (Step-by-Step)",
-  description: "Complete guide on printing from Android phones and tablets to any Windows-connected USB or network printer using Printora. Local Wi-Fi discovery with zero cloud dependencies.",
+  title: "Print from Android to Windows Printer Guide",
+  description: "Step-by-step guide to printing from Android to any Windows-connected USB or network printer using Printora. Local Wi-Fi with zero cloud dependencies.",
   path: "/print-from-android-to-windows-printer",
   keywords: [
     "print from android to windows printer",

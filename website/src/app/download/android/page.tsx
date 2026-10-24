@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "Download Printora for Android (Native Kotlin APK)",
-  description: "Download the native Printora Android mobile app for phones and tablets. Automatic mDNS discovery, camera document scanner, ID card A4 mode, and direct wireless printing.",
+  title: "Download Printora Android App (APK)",
+  description: "Download the native Printora Android app for phones and tablets. Automatic mDNS discovery, camera document scanner, and direct wireless printing.",
   path: "/download/android",
   keywords: [
     "download printora android apk",

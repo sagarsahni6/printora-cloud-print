@@ -185,3 +185,33 @@ export function HowToJsonLd({
     />
   );
 }
+
+export function VideoJsonLd() {
+  const videoSchema = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": "Printora Wireless & Remote Printing Software Walkthrough",
+    "description": "Watch how Printora turns any Windows PC into a local Wi-Fi print host for Android phones, iPhones via QR Web Print, and remote printing via Cloudflare Tunnel.",
+    "thumbnailUrl": `${siteConfig.url}/printora-video-poster.jpg`,
+    "uploadDate": "2026-10-24T12:00:00+05:30",
+    "contentUrl": `${siteConfig.url}/printora-product-video.mp4`,
+    "embedUrl": siteConfig.url,
+    "publisher": {
+      "@type": "Organization",
+      "name": siteConfig.parentCompany.name,
+      "url": siteConfig.parentCompany.url,
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${siteConfig.url}/logo.png`,
+      },
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(videoSchema) }}
+    />
+  );
+}
+

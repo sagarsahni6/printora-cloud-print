@@ -4,8 +4,8 @@ import { constructMetadata } from "@/lib/metadata";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
-  title: "Compare Mobile & Windows Printing Solutions – Printora Alternatives",
-  description: "See how Printora compares to PrinterShare, Google Cloud Print, and NokoPrint. 100% free, zero ads, zero accounts, and local data privacy for your Windows PC printers.",
+  title: "Compare Mobile & Windows Printing Solutions",
+  description: "See how Printora compares to PrinterShare, Google Cloud Print, and NokoPrint. 100% free, zero ads, zero accounts, and local-first data privacy.",
   path: "/compare",
   keywords: [
     "mobile printing comparison",

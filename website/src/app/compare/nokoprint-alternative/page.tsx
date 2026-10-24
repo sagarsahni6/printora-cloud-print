@@ -4,8 +4,8 @@ import { constructMetadata } from "@/lib/metadata";
 import { BreadcrumbJsonLd, FaqJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
-  title: "Best Free NokoPrint Alternative (No Ads, No Manual IP Setup) – Printora",
-  description: "Frustrated by ads and complex Windows SMB setups in NokoPrint? Printora offers zero ads, automatic zero-config PC printer discovery, and browser printing for iOS.",
+  title: "Best Free NokoPrint Alternative (No Ads or Setup)",
+  description: "Frustrated by ads and SMB setups in NokoPrint? Printora offers zero ads, automatic zero-config PC printer discovery, and QR Web Print for iOS.",
   path: "/compare/nokoprint-alternative",
   keywords: [
     "nokoprint alternative",

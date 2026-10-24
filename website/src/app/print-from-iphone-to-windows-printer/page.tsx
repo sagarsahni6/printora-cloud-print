@@ -6,7 +6,7 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "How to Print from iPhone to a Windows Printer (No App Required)",
+  title: "Print from iPhone to Windows Printer (QR Web)",
   description: "Learn how to print from your iPhone to any printer connected to a Windows PC using QR Web Print. No native iOS app installation or AirPrint adapter required.",
   path: "/print-from-iphone-to-windows-printer",
   keywords: [

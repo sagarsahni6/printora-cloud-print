@@ -8,7 +8,7 @@ import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
   title: "On-Device OCR Text Extraction Feature",
-  description: "Extract selectable, editable text directly from paper documents, invoices, receipts, and photos with Printora on-device optical character recognition. 100% offline and private.",
+  description: "Extract selectable, editable text from paper documents, invoices, and photos with Printora on-device OCR. 100% offline, private, and zero cloud API fees.",
   path: "/features/ocr",
   keywords: [
     "on device ocr text extraction",

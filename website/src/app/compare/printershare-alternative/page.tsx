@@ -4,8 +4,8 @@ import { constructMetadata } from "@/lib/metadata";
 import { BreadcrumbJsonLd, FaqJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
-  title: "Best Free PrinterShare Alternative (No Ads, No Account) – Printora",
-  description: "Looking for a free alternative to PrinterShare? Printora offers zero subscriptions, zero ads, and instant wireless mobile printing to any Windows-connected printer with full local privacy.",
+  title: "Best Free PrinterShare Alternative (Zero Ads)",
+  description: "Looking for a free PrinterShare alternative? Printora offers zero subscriptions, zero ads, and instant wireless printing to any Windows printer.",
   path: "/compare/printershare-alternative",
   keywords: [
     "printershare alternative",

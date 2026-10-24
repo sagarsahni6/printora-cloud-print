@@ -4,8 +4,8 @@ import { constructMetadata } from "@/lib/metadata";
 import { BreadcrumbJsonLd, FaqJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
-  title: "Best Google Cloud Print Alternative for Windows (Free, 2026) – Printora",
-  description: "Still missing Google Cloud Print? Printora is the lightweight, 100% free Windows & mobile alternative. Print from phone to any printer over Wi-Fi or 4G/5G with zero port forwarding.",
+  title: "Free Google Cloud Print Alternative for Windows",
+  description: "Still missing Google Cloud Print? Printora is the 100% free Windows & mobile alternative. Print from phone to any printer over local Wi-Fi or 4G/5G.",
   path: "/compare/google-cloud-print-alternative",
   keywords: [
     "google cloud print alternative",

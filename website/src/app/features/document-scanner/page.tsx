@@ -8,7 +8,7 @@ import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
   title: "Mobile Phone Camera Document Scanner Feature",
-  description: "Capture crisp, perspective-corrected PDFs with automatic quad edge detection, adaptive contrast filters, and direct scan-to-print. Supports up to 20 pages per batch.",
+  description: "Capture crisp, perspective-corrected PDFs with automatic edge detection, adaptive contrast filters, and direct scan-to-print. Up to 20 pages per batch.",
   path: "/features/document-scanner",
   keywords: [
     "mobile document scanner feature",

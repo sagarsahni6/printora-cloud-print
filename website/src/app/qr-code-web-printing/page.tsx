@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "QR Code Web Printing – Contactless Self-Service Print Station",
-  description: "Turn any Windows printer into a QR-powered self-service print station. Zero-install mobile browser printing with IP rate limiting, token authentication, and automatic file cleanup.",
+  title: "QR Code Web Printing for Phone & Browser",
+  description: "Turn any Windows PC into a QR-powered print station. Zero-install browser printing with rate limits, token auth, and automatic temp-file cleanup.",
   path: "/qr-code-web-printing",
   keywords: [
     "qr code web printing architecture",

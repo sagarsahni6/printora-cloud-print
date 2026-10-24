@@ -6,7 +6,7 @@ import { constructMetadata } from "@/lib/metadata";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const metadata = constructMetadata({
-  title: "QR Web Print Studio for iPhone, iPad & Modern Browsers",
+  title: "QR Web Print Studio for iPhone & Browsers",
   description: "Zero-install printing for iOS and browser users. Scan the QR code, upload your document, configure print options, and spool directly to Windows.",
   path: "/features/web-print",
   keywords: [

@@ -5,13 +5,15 @@ import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { ComparisonSection } from "@/components/ComparisonSection";
 import { FaqSection } from "@/components/FaqSection";
 import { FinalCtaSection } from "@/components/FinalCtaSection";
-import { FaqJsonLd } from "@/components/JsonLd";
+import { FaqJsonLd, VideoJsonLd } from "@/components/JsonLd";
 
 export default function HomePage() {
   return (
     <>
       {/* Rich SEO Schema Markup */}
       <FaqJsonLd />
+      <VideoJsonLd />
+
 
       {/* 1. Hero 2.0 with Interactive Product Studio */}
       <Hero />

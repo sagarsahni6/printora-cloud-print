@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "Remote Printing from Phone over 4G/5G (Zero Port Forwarding)",
-  description: "Print to your home or office Windows printer from cellular 4G/5G data anywhere in the world without opening router ports, using secure Cloudflare Tunnel integration.",
+  title: "Remote Printing from Phone over 4G/5G",
+  description: "Print to your Windows printer over 4G/5G cellular data from anywhere in the world without opening router ports, using secure Cloudflare Tunnel.",
   path: "/remote-printing-from-phone",
   keywords: [
     "remote printing from phone 4g 5g",

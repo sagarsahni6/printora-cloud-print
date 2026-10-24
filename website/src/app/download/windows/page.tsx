@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "Download Printora Server for Windows (64-Bit .NET 8)",
-  description: "Download the official Printora Windows Server for Windows 10 and Windows 11. Turn any PC into a secure local wireless print bridge for Android, iPhone, and web browsers.",
+  title: "Download Printora Server for Windows (.NET 8)",
+  description: "Download official Printora Windows Server for Windows 10 & 11. Turn any PC into a secure local wireless print bridge for Android, iPhone, and web.",
   path: "/download/windows",
   keywords: [
     "download printora windows",

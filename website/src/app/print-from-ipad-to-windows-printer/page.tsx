@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "How to Print from iPad to a Windows Printer (No AirPrint Needed)",
-  description: "Print directly from iPadOS to any non-AirPrint printer connected to your Windows PC using QR-based Web Print. No AirPrint dongles, software emulation, or app installs required.",
+  title: "Print from iPad to Windows Printer (No AirPrint)",
+  description: "Print directly from iPad to any non-AirPrint printer connected to Windows via QR Web Print. No dongles, emulation, or app installs required.",
   path: "/print-from-ipad-to-windows-printer",
   keywords: [
     "print from ipad to windows printer",

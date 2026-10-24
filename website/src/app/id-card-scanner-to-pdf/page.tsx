@@ -6,8 +6,8 @@ import { AuthorBadge } from "@/components/AuthorBadge";
 import { MiniFaq } from "@/components/MiniFaq";
 
 export const metadata = constructMetadata({
-  title: "ID Card Scanner to PDF – Dual-Sided Scan to Single A4 Page",
-  description: "Scan the front and back of any identity card, driver license, or employee badge and combine both sides cleanly onto a single A4 PDF page without paper flipping.",
+  title: "ID Card Scanner to A4 PDF Dual-Sided Scan",
+  description: "Scan front and back of any ID card or driver license and combine both sides cleanly onto a single A4 PDF page without flipping paper.",
   path: "/id-card-scanner-to-pdf",
   keywords: [
     "id card scanner to pdf",
