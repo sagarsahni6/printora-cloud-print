@@ -29,21 +29,21 @@ export const releasesConfig: ReleaseInfo = {
     installer: {
       fileName: "PrintoraServer-Setup.exe",
       url: `${GITHUB_REPO}/releases/latest/download/PrintoraServer-Setup.exe`,
-      sha256: "65cad21265be105a06a267eb08d83ec5bf71769e894820ba6300fd88df7cc2dc",
-      sizeBytes: 177314,
+      sha256: "a517630d3988f05c7105b707af7bf3e1e58c2a5dd7c25767696c38d5ddb00d29",
+      sizeBytes: 96925722,
     },
     portableZip: {
       fileName: "PrintoraServer-Windows-v2.2.3.zip",
       url: `${GITHUB_REPO}/releases/latest/download/PrintoraServer-Windows.zip`,
-      sha256: "12f1203d097b9f68b80bdd14c921b506debb58e6637c30d7973c30759a6ce0af",
-      sizeBytes: 86893177,
+      sha256: "1ca02910f41ecfc993bff0016ff8d73b4ca9562968bae251b7b57236c4bf4dff",
+      sizeBytes: 101919166,
     },
   },
   android: {
     apk: {
       fileName: "Printora-Android-v2.2.3.apk",
       url: `${GITHUB_REPO}/releases/latest/download/Printora-Android.apk`,
-      sha256: "d0c76805078b6552b4bc83c4cc131ba9fa85d268d34fa1be4cc8fc0d7f4570cb",
+      sha256: "f46a79520566a24073dbc471c442d1f3a39a30abc2ce7b32cfe6ddcc6652b58f",
       sizeBytes: 2602512,
     },
   },
