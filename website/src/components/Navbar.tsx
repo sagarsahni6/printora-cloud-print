@@ -2,16 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { 
   Printer, 
   Menu, 
   X 
 } from "lucide-react";
-import { isHostPortalRoute } from "@/lib/routes";
 
 export function Navbar() {
-  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -32,11 +29,6 @@ export function Navbar() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  // Isolate host Web Print Studio routes from marketing landing page navbar
-  if (isHostPortalRoute(pathname)) {
-    return null;
-  }
 
   return (
     <header className="sticky top-0 z-50 w-full transition-all duration-300 px-3 sm:px-6 lg:px-8 pt-3 pb-1">

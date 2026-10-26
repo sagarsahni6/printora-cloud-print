@@ -6,6 +6,7 @@ export const siteConfig = {
   supportingLine: "Your Windows PC becomes the print bridge between your phone and your printer.",
   description: "Print PDFs and photos from Android, iPhone, or browser to a printer connected to your Windows PC. Local Wi-Fi printing with optional remote access.",
   url: "https://printora.calclabz.com",
+  googleAnalyticsId: process.env.NEXT_PUBLIC_GA_ID || "G-J12HBFHDQ0",
   parentCompany: {
     name: "CalcLabz",
     url: "https://calclabz.com",

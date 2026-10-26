@@ -87,7 +87,7 @@ This document tracks all security, architectural, and operational fixes applied 
 ### Release v2.2.3 (Cloud Relay & Startup Hardening)
 - **Cloudflare Relay & Tunnel Auto-Recovery**:
   - Resolved Cloudflare 1033 tunnel resolution error by ensuring `cloudflared` starts with correct working directory and configuration file discovery.
-  - Verified remote health routing traffic directly to branded `https://printora.calclabz.com/{HostIdentifier}` endpoints with HTTP 200 responses.
+  - Verified remote tunnel health routing traffic to `https://relay.calclabz.com` and branded `https://printora.calclabz.com/{HostIdentifier}` endpoints with HTTP 200 responses.
 - **Windows Startup & Process Discovery**:
   - Updated `MainWindow.xaml.cs` `SetAutoStart()` to register `PrintoraServer.exe` and automatically clean up legacy `WifiPrintServer` registry run keys.
   - Fixed `App.xaml.cs` `InstallDir` detection to gracefully match both `Printora Server` and `PrintoraServer` paths in LocalApplicationData.

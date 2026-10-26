@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { Navbar } from "@/components/Navbar";
@@ -97,14 +97,29 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col font-sans bg-[var(--background)] text-[var(--foreground)] antialiased selection:bg-emerald-500/20 selection:text-emerald-700">
+        {siteConfig.googleAnalyticsId && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${siteConfig.googleAnalyticsId}`}
+            />
+            <Script
+              id="google-analytics"
+              strategy="afterInteractive"
+            >
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${siteConfig.googleAnalyticsId}');
+              `}
+            </Script>
+          </>
+        )}
         <JsonLd />
-        <Suspense fallback={null}>
-          <Navbar />
-        </Suspense>
+        <Navbar />
         <main className="flex-1">{children}</main>
-        <Suspense fallback={null}>
-          <Footer />
-        </Suspense>
+        <Footer />
       </body>
     </html>
   );
